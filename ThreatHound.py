@@ -99,6 +99,11 @@ TaskContent2_rex = re.compile('<Arguments>(.*)</Arguments>', re.IGNORECASE)
 Powershell_Command_rex= re.compile('<Data Name=\"ScriptBlockText\">(.*)</Data>', re.IGNORECASE)
 # My process Command Line Regex
 Process_Command_Line_rex=re.compile('<Data Name=\"CommandLine\">(.*)</Data>|<CommandLine>(.*)</CommandLine>', re.IGNORECASE)
+# My New Process Name regex
+New_Process_Name_rex=re.compile('<Data Name=\"NewProcessName\">(.*)</Data>', re.IGNORECASE)
+# My Regex
+TokenElevationType_rex=re.compile('<Data Name=\"TokenElevationType\">(.*)</Data>', re.IGNORECASE)
+
 #======================
 
 Security_ID_rex = re.compile('<Data Name=\"SubjectUserSid\">(.*)</Data>|<SubjectUserSid>(.*)</SubjectUserSid>', re.IGNORECASE)
@@ -114,8 +119,6 @@ Logon_Process_rex = re.compile('<Data Name=\"LogonProcessName\">(.*)</Data>|<Log
 Key_Length_rex = re.compile('<Data Name=\"KeyLength\">(.*)</Data>|<KeyLength>(.*)</KeyLength>', re.IGNORECASE)
 
 AccessMask_rex = re.compile('<Data Name=\"AccessMask\">(.*)</Data>|<AccessMask>(.*)</AccessMask>', re.IGNORECASE)
-
-New_Process_Name_rex=re.compile('<Data Name=\"NewProcessName\">(.*)</Data>', re.IGNORECASE)
 
 TicketOptions_rex=re.compile('<Data Name=\"TicketOptions\">(.*)</Data>|<TicketOptions>(.*)</TicketOptions>', re.IGNORECASE)
 TicketEncryptionType_rex=re.compile('<Data Name=\"TicketEncryptionType\">(.*)</Data>|<TicketEncryptionType>(.*)</TicketEncryptionType>', re.IGNORECASE)
@@ -361,6 +364,8 @@ def detect_events_security_log(file_name):
                 Target_Account_Domain=Account_Domain_Target_rex.findall(record['data'])
                 Workstation_Name = Workstation_Name_rex.findall(record['data'])
                 PowerShell_Command = Powershell_Command_rex.findall(record['data'])
+                New_Process_Name = New_Process_Name_rex.findall(record['data'])
+                TokenElevationType = TokenElevationType_rex.findall(record['data'])
                 #====================
 
                 Logon_Process = Logon_Process_rex.findall(record['data'])
@@ -376,9 +381,6 @@ def detect_events_security_log(file_name):
 
 
                 Member_Sid =Member_Sid_rex.findall(record['data'])
-
-
-                New_Process_Name=New_Process_Name_rex.findall(record['data'])
 
                 Process_Name=Process_Name_sec_rex.findall(record['data'])
 
@@ -725,7 +727,7 @@ def detect_events_security_log(file_name):
                     except Exception as e:
                         print("Error parsing Event", e)
 
-                #Detect suspicious process Using PowerShell
+                #Detect suspicious process Runing PowerShell Command
                 if EventID[0]=="4688":
                     try:
                         if len(Account_Name[0])>0:
@@ -733,19 +735,62 @@ def detect_events_security_log(file_name):
                             accountName = Account_Name[0][0].strip()
                             ProcessId = Process_Id[0][0].strip()
                             commandLine = Command_line[0][0].strip()
+                            Process_Name = New_Process_Name[0].strip()
+                            TokenElevationType = TokenElevationType[0].strip()
                             Command_unescape = html.unescape(commandLine)
 
                         Base64Finder = re.findall(r'(?:[A-Za-z0-9+/]{4}){2,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)', Command_unescape)
 
-                        if "powershell.exe" in Command_unescape.lower() or "powershell" in Command_unescape.lower():
+                        if "powershell.exe" in Command_unescape.lower() or "powershell" in Command_unescape.lower() and "%%1936" in TokenElevationType: #and "cmd.exe" in Process_Name.lower():
                             print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
-                            print(" [+] \033[0;31;47mFound Suspicios Process Using PowerShell\033[0m\n ", end='')
+                            print(" [+] \033[0;31;47mFound Suspicios Process Runing PowerShell Command On Full Privilege \033[0m\n ", end='')
                             print(" [+] Computer Name : ( %s ) \n " % computer, end='')
                             print(" [+] User Name : ( %s ) \n " % accountName, end='')
                             print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
+                            print(" [+] Process Name : ( %s ) \n " % Process_Name, end='')
                             print(" [+] Process Command Line : ( %s ) \n " % Command_unescape, end='')
                             if len(Base64Finder[0])>5:
                                print(" [+] Base64 Command : ( %s ) \n " % Base64Finder[0], end='')
+                            print("____________________________________________________\n")
+                        # PipeName
+                        pipe = r'\.\pipe'
+                        #Detect Privilege esclation "GetSystem"
+                        if "cmd.exe /c echo" in Command_unescape.lower() and "%%1936" in TokenElevationType and "cmd.exe" in Process_Name.lower() and pipe in Command_unescape.lower():
+                            print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mGetSystem Detect By metasploit & Cobalt Strike & Empire & PoshC2\033[0m\n ", end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] User Name : ( %s ) \n " % accountName, end='')
+                            print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
+                            print(" [+] Process Name : ( %s ) \n " % Process_Name, end='')
+                            print(" [+] Process Command Line : ( %s ) \n " % Command_unescape, end='')
+                            print("____________________________________________________\n")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+                #Detect Privilege esclation "GetSystem"
+                if EventID[0]=="7045":
+                    try:
+                        if len(Account_Name[0])>0:
+                            computer = Account_Domain[0][0].strip()
+                            accountName = Account_Name[0][0].strip()
+                            ProcessId = Process_Id[0][0].strip()
+                            commandLine = Command_line[0][0].strip()
+                            Process_Name = New_Process_Name[0].strip()
+                            TokenElevationType = TokenElevationType[0].strip()
+                            Command_unescape = html.unescape(commandLine)
+
+                        # PipeName
+                        pipe = r'\.\pipe'
+                        #Detect Privilege esclation "GetSystem"
+                        if "cmd.exe /c echo" in Command_unescape.lower() and "%%1936" in TokenElevationType and "cmd.exe" in Process_Name.lower() and pipe in Command_unescape.lower():
+                            print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mGetSystem Detect By metasploit & Cobalt Strike & Empire & PoshC2\033[0m\n ", end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] User Name : ( %s ) \n " % accountName, end='')
+                            print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
+                            print(" [+] Process Name : ( %s ) \n " % Process_Name, end='')
+                            print(" [+] Process Command Line : ( %s ) \n " % Command_unescape, end='')
                             print("____________________________________________________\n")
 
                     except Exception as e:
