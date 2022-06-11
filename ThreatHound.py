@@ -8,6 +8,8 @@ from dateutil.parser import parse
 from dateutil.parser import isoparse
 from pytz import timezone
 import html
+import base64
+import codecs
 
 try:
     from evtx import PyEvtxParser
@@ -95,6 +97,8 @@ TaskContent_rex = re.compile('<Data Name=\"TaskContent\">([^"]*)</Data>|<TaskCon
 TaskContent2_rex = re.compile('<Arguments>(.*)</Arguments>', re.IGNORECASE)
 # My PowerShell regex
 Powershell_Command_rex= re.compile('<Data Name=\"ScriptBlockText\">(.*)</Data>', re.IGNORECASE)
+# My process Command Line Regex
+Process_Command_Line_rex=re.compile('<Data Name=\"CommandLine\">(.*)</Data>|<CommandLine>(.*)</CommandLine>', re.IGNORECASE)
 #======================
 
 Security_ID_rex = re.compile('<Data Name=\"SubjectUserSid\">(.*)</Data>|<SubjectUserSid>(.*)</SubjectUserSid>', re.IGNORECASE)
@@ -110,8 +114,6 @@ Logon_Process_rex = re.compile('<Data Name=\"LogonProcessName\">(.*)</Data>|<Log
 Key_Length_rex = re.compile('<Data Name=\"KeyLength\">(.*)</Data>|<KeyLength>(.*)</KeyLength>', re.IGNORECASE)
 
 AccessMask_rex = re.compile('<Data Name=\"AccessMask\">(.*)</Data>|<AccessMask>(.*)</AccessMask>', re.IGNORECASE)
-
-Process_Command_Line_rex=re.compile('<Data Name=\"CommandLine\">(.*)</Data>|<CommandLine>(.*)</CommandLine>', re.IGNORECASE)
 
 New_Process_Name_rex=re.compile('<Data Name=\"NewProcessName\">(.*)</Data>', re.IGNORECASE)
 
@@ -278,7 +280,15 @@ IPv4_PATTERN = re.compile(r"\A\d+\.\d+\.\d+\.\d+\Z", re.DOTALL)
 IPv6_PATTERN = re.compile(r"\A(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,5})?|([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,4})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,3})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,2})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3}))?)?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::([0-9a-f]|[1-9a-f][0-9a-f]{1,3})?|(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){3}))))))\Z", re.DOTALL)
 
 
-evtx_list = ["12.evtx"]
+evtx_list = ["13.evtx"]
+
+#detect base64 commands
+def isBase64(command):
+    try:
+        return base64.b64encode(base64.b64decode(command)) == command
+    except Exception:
+        return False
+
 
 def to_lxml(record_xml):
     rep_xml = record_xml.replace("xmlns=\"http://schemas.microsoft.com/win/2004/08/events/event\"", "")
@@ -697,13 +707,45 @@ def detect_events_security_log(file_name):
                             PowerShell_Command = PowerShell_Command[0].strip()
                             Command = html.unescape(PowerShell_Command)
 
+                        #check if command is encoded
+                        if isBase64(Command) == False:
+                            IsEncoded = False
+                        else:
+                            CommandEncoded = isBase64(Command)
+                            print(CommandEncoded)
                             #check if  download start
-                        if "IEX(New-Object Net.WebClient).downloadString" in PowerShell_Command or "(New-Object Net.WebClient)" in PowerShell_Command or "[System.NET.WebRequest]" in PowerShell_Command:
+                        if IsEncoded == False and "IEX(New-Object Net.WebClient).downloadString" in PowerShell_Command or "(New-Object Net.WebClient)" in PowerShell_Command or "[System.NET.WebRequest]" in PowerShell_Command:
                             print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='') ### Fix Time
                             print("[+] \033[0;31;47mPowerShell Download Detect ! \033[0m\n ", end='')
                             print("[+] PowerShell Command : ( %s ) \n" % Command, end='')
                             print(" [+] Computer : ( %s ) \n" % computer, end='')
                             print(" [+] Channel : ( %s ) \n" % channel, end='')
+                            print("____________________________________________________\n")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+                #Detect suspicious process Using PowerShell
+                if EventID[0]=="4688":
+                    try:
+                        if len(Account_Name[0])>0:
+                            computer = Account_Domain[0][0].strip()
+                            accountName = Account_Name[0][0].strip()
+                            ProcessId = Process_Id[0][0].strip()
+                            commandLine = Command_line[0][0].strip()
+                            Command_unescape = html.unescape(commandLine)
+
+                        Base64Finder = re.findall(r'(?:[A-Za-z0-9+/]{4}){2,}(?:[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=|[A-Za-z0-9+/][AQgw]==)', Command_unescape)
+
+                        if "powershell.exe" in Command_unescape.lower() or "powershell" in Command_unescape.lower():
+                            print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mFound Suspicios Process Using PowerShell\033[0m\n ", end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] User Name : ( %s ) \n " % accountName, end='')
+                            print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
+                            print(" [+] Process Command Line : ( %s ) \n " % Command_unescape, end='')
+                            if len(Base64Finder[0])>5:
+                               print(" [+] Base64 Command : ( %s ) \n " % Base64Finder[0], end='')
                             print("____________________________________________________\n")
 
                     except Exception as e:
@@ -746,8 +788,6 @@ def detect_events_security_log(file_name):
 
                     except Exception as e:
                         print("Error parsing Event", e)
-
-
 
 # Parsing Evtx File
 def parse_evtx(evtx_list):
