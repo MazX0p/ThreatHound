@@ -1,3 +1,4 @@
+import sys
 import csv
 import re
 from netaddr import *
@@ -275,6 +276,10 @@ Logon_Events=[{'Date and Time':[],'timestamp':[],'Event ID':[],'Account Name':[]
 
 EVTX_HEADER = b"\x45\x6C\x66\x46\x69\x6C\x65\x00"
 evtx_list = ["Sysmon-Operational.evtx"]
+user_list = []
+user_list_2 = []
+sourceIp_list = []
+sourceIp_list_2 = []
 
 # IPv4 regex
 IPv4_PATTERN = re.compile(r"\A\d+\.\d+\.\d+\.\d+\Z", re.DOTALL)
@@ -283,7 +288,7 @@ IPv4_PATTERN = re.compile(r"\A\d+\.\d+\.\d+\.\d+\Z", re.DOTALL)
 IPv6_PATTERN = re.compile(r"\A(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,5})?|([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,4})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,3})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,2})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3}))?)?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::([0-9a-f]|[1-9a-f][0-9a-f]{1,3})?|(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){3}))))))\Z", re.DOTALL)
 
 
-evtx_list = ["13.evtx"]
+evtx_list = ["14.evtx"]
 
 #detect base64 commands
 def isBase64(command):
@@ -833,6 +838,46 @@ def detect_events_security_log(file_name):
 
                     except Exception as e:
                         print("Error parsing Event", e)
+
+
+                #detect PasswordSpray Attack
+                if EventID[0] == "4648":
+                    try:
+                        if len(Account_Name[0][0])>0:
+                            user=Account_Name[0][0].strip()
+                            target_account_name=TargetAccount_Name[0][0].strip()
+                            target_account_domain=Target_Account_Domain[0][0].strip()
+                            source_ip=Source_IP[0][0].strip()
+                        if len(Account_Name[0][1])>0:
+                            target_account_name=TargetAccount_Name[0][1].strip()
+                            target_account_domain=Target_Account_Domain[0][1].strip()
+                            source_ip=Source_IP[0][1].strip()
+
+                        #For Defrinceation
+                        user_list.append(user)
+                        user_list_2.append(user)
+                        sourceIp_list.append(source_ip)
+                        sourceIp_list_2.append(source_ip)
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+    # For Defrinceation and Detect the attack
+    if range(len(user_list)) == range(len(user_list_2)) and range(len(sourceIp_list)) == range(len(sourceIp_list_2)):
+        SprayUserDetector = 0
+        for x in range(len(user_list)):
+            if user_list[x] == user_list_2[x]:
+                SprayUserDetector += 1
+        if SprayUserDetector >= 10:
+            print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='') ### Fix Time
+            print("[+] \033[0;31;47mPassword Spray Detected!! \033[0m\n ", end='')
+            print("[+] Attacker User Name : ( %s ) \n" % user, end='')
+            print(" [+] Account Domain : ( %s ) \n" % target_account_domain, end='')
+            print(" [+] Source IP : ( %s ) \n" % source_ip, end='')
+            print(" [+] Number Of Spray : ( %s ) \n" % SprayUserDetector, end='')
+            print("____________________________________________________\n")
+
+#========================================== END OF SPRAY Detect
 
 # Parsing Evtx File
 def parse_evtx(evtx_list):
