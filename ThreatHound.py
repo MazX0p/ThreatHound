@@ -104,7 +104,10 @@ Process_Command_Line_rex=re.compile('<Data Name=\"CommandLine\">(.*)</Data>|<Com
 New_Process_Name_rex=re.compile('<Data Name=\"NewProcessName\">(.*)</Data>', re.IGNORECASE)
 # My Regex
 TokenElevationType_rex=re.compile('<Data Name=\"TokenElevationType\">(.*)</Data>', re.IGNORECASE)
-
+# My PipeName Regex
+PipeName_rex=re.compile("<Data Name=\"PipeName\">(.*)</Data>")
+# My ImageName Regex
+Image_rex=re.compile("<Data Name=\"Image\">(.*)</Data>")
 #======================
 
 Security_ID_rex = re.compile('<Data Name=\"SubjectUserSid\">(.*)</Data>|<SubjectUserSid>(.*)</SubjectUserSid>', re.IGNORECASE)
@@ -218,7 +221,6 @@ Winrm_UserID_rex=re.compile('<Security UserID=\"(.*)\"', re.IGNORECASE)
 Sysmon_CommandLine_rex=re.compile("<Data Name=\"CommandLine\">(.*)</Data>")
 Sysmon_ProcessGuid_rex=re.compile("<Data Name=\"ProcessGuid\">(.*)</Data>")
 Sysmon_ProcessId_rex=re.compile("<Data Name=\"ProcessId\">(.*)</Data>")
-Sysmon_Image_rex=re.compile("<Data Name=\"Image\">(.*)</Data>")
 Sysmon_FileVersion_rex=re.compile("<Data Name=\"FileVersion\">(.*)</Data>")
 Sysmon_Company_rex=re.compile("<Data Name=\"Company\">(.*)</Data>")
 Sysmon_Product_rex=re.compile("<Data Name=\"Product\">(.*)</Data>")
@@ -261,13 +263,11 @@ Sysmon_ImageLoaded_rex=re.compile("<Data Name=\"ImageLoaded\">(.*)</Data>")
 Sysmon_GrantedAccess_rex=re.compile("<Data Name=\"GrantedAccess\">(.*)</Data>")
 Sysmon_CallTrace_rex=re.compile("<Data Name=\"CallTrace\">(.*)</Data>")
 Sysmon_Details_rex=re.compile("<Data Name=\"Details\">(.*)</Data>")
-Sysmon_PipeName_rex=re.compile("<Data Name=\"PipeName\">(.*)</Data>")
 
 Sysmon_ImageLoaded_rex=re.compile("<Data Name=\"ImageLoaded\">(.*)</Data>")
 Sysmon_GrantedAccess_rex=re.compile("<Data Name=\"GrantedAccess\">(.*)</Data>")
 Sysmon_CallTrace_rex=re.compile("<Data Name=\"CallTrace\">(.*)</Data>")
 Sysmon_Details_rex=re.compile("<Data Name=\"Details\">(.*)</Data>")
-Sysmon_PipeName_rex=re.compile("<Data Name=\"PipeName\">(.*)</Data>")
 
 ##########
 
@@ -288,7 +288,7 @@ IPv4_PATTERN = re.compile(r"\A\d+\.\d+\.\d+\.\d+\Z", re.DOTALL)
 IPv6_PATTERN = re.compile(r"\A(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,5})?|([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,4})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,3})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,2})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3}))?)?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::([0-9a-f]|[1-9a-f][0-9a-f]{1,3})?|(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){3}))))))\Z", re.DOTALL)
 
 
-evtx_list = ["Full_APT_Attack.evtx"]
+evtx_list = ["16.evtx"]
 
 #detect base64 commands
 def isBase64(command):
@@ -371,6 +371,8 @@ def detect_events_security_log(file_name):
                 PowerShell_Command = Powershell_Command_rex.findall(record['data'])
                 New_Process_Name = New_Process_Name_rex.findall(record['data'])
                 TokenElevationType = TokenElevationType_rex.findall(record['data'])
+                PipeName2 = PipeName_rex.findall(record['data'])
+                ImageName2 = Image_rex.findall(record['data'])
                 #====================
 
                 Logon_Process = Logon_Process_rex.findall(record['data'])
@@ -806,6 +808,105 @@ def detect_events_security_log(file_name):
                             print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
                             print(" [+] Process Name : ( %s ) \n " % Process_Name, end='')
                             print(" [+] Process Command Line : ( %s ) \n " % Command_unescape, end='')
+                            print("____________________________________________________\n")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+                #Detect PsExec execution
+                if EventID[0]=="1":
+                    try:
+                        if len(User_Name[0][0])>0:
+                            UserName_2 = User_Name[0][0].strip()
+                            Process_id = Process_Id[0][0].strip()
+                            Command_line_2 = Command_line[0][0].strip()
+                            Fileversion = FileVersion[0][0].strip()
+                            hashes = Hashes[0][0].strip()
+                            description = Description[0][0].strip()
+                            computer = Computer_Name[0].strip()
+                            ParentProcessid = ParentProcessId[0][0].strip()
+                            Parentimage = ParentImage[0][0].strip()
+                            ParentCommandline = ParentCommandLine[0][0].strip()
+                            UtcTime1 = UtcTime[0][0].strip()
+
+                        if len(User_Name[0][1])>0:
+                            UserName_2 = User_Name[0][1]
+                            Process_id = Process_Id[0][1].strip()
+                            Command_line_2 = Command_line[0][1].strip()
+                            Fileversion = FileVersion[0][1].strip()
+                            hashes = Hashes[0][1].strip()
+                            description = Description[0][1].strip()
+                            computer = Computer_Name[1].strip()
+                            ParentProcessid = ParentProcessId[0][1].strip()
+                            Parentimage = ParentImage[0][1].strip()
+                            ParentCommandline = ParentCommandLine[0][1].strip()
+                            UtcTime1 = UtcTime[0][1].strip()
+
+
+                        hashes = re.findall(r'(?i)(?<![a-z0-9])[a-f0-9]{32}(?![a-z0-9])', hashes)
+                        MD5 = hashes[0].strip()
+                        Command_unescape = html.unescape(Command_line_2)
+
+                        # Detect PsExec
+                        if "psexesvc.exe" in Parentimage.lower() or "psexesvc.exe" in ParentCommandline.lower():
+                            print("\n__________ " + UtcTime1 + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mPsexesvc execution Detected !! \033[0m\n ", end='')
+                            print(" [+] Command Line : ( %s ) \n " % Command_unescape , end='')
+                            print(" [+] Parent Process Command Line : ( %s ) \n " % ParentCommandline, end='')
+                            print(" [+] User Name : ( %s ) \n " % UserName_2, end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] File Info : ( %s ) \n " % Fileversion, end='')
+                            print(" [+] description : ( %s ) \n " % description, end='')
+                            print(" [+] Process MD5 : ( %s ) \n " % MD5, end='')
+                            print(" [+] ParentImage Path : ( %s ) \n " % Parentimage, end='')
+                            print(" [+] Process ID : ( %s ) \n " % Process_id, end='')
+                            print(" [+] Parent Process ID : ( %s ) \n " % ParentProcessid, end='')
+                            print("____________________________________________________\n")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+                #Detect PsExec Pipe Connection
+                if EventID[0]=="18":
+                    try:
+                        if len(Computer_Name[0])>0:
+                            computer = Computer_Name[0].strip()
+                            Process_id = Process_Id[0][0].strip()
+                            PipeName2 = PipeName2[0].strip()
+                            ImageName2 = ImageName2[0].strip()
+                            UtcTime1 = UtcTime[0][0].strip()
+
+                        # Detect PsExec Pipe Connection
+                        if "\psexesvc" in PipeName2.lower() and "stderr" in PipeName2.lower() or "\psexesvc" in PipeName2.lower() and "stdin" in PipeName2.lower() or "\psexesvc" in PipeName2.lower() and "stdout" in PipeName2.lower():
+                            print("\n__________ " + UtcTime1 + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mPsExec Pipe Connection Detected !! \033[0m\n ", end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] Image Name : ( %s ) \n " % ImageName2, end='')
+                            print(" [+] Process ID : ( %s ) \n " % Process_id, end='')
+                            print(" [+] PipeName : ( %s ) \n " % PipeName2, end='')
+                            print("____________________________________________________\n")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+                #Detect PsExec Pipe Creation
+                if EventID[0]=="17":
+                    try:
+                        if len(Computer_Name[0])>0:
+                            computer = Computer_Name[0].strip()
+                            Process_id = Process_Id[0][0].strip()
+                            PipeName2 = PipeName2[0].strip()
+                            ImageName2 = ImageName2[0].strip()
+                            UtcTime1 = UtcTime[0][0].strip()
+
+                        # Detect PsExec Pipe Creation
+                        if "\psexesvc" in PipeName2.lower() and "stderr" in PipeName2.lower() or "\psexesvc" in PipeName2.lower() and "stdin" in PipeName2.lower() or "\psexesvc" in PipeName2.lower() and "stdout" in PipeName2.lower():
+                            print("\n__________ " + UtcTime1 + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mPsExec Pipe Creation Detected !! \033[0m\n ", end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] Image Name : ( %s ) \n " % ImageName2, end='')
+                            print(" [+] Process ID : ( %s ) \n " % Process_id, end='')
+                            print(" [+] PipeName : ( %s ) \n " % PipeName2, end='')
                             print("____________________________________________________\n")
 
                     except Exception as e:
