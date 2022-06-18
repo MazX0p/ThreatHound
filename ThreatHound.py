@@ -288,7 +288,7 @@ IPv4_PATTERN = re.compile(r"\A\d+\.\d+\.\d+\.\d+\Z", re.DOTALL)
 IPv6_PATTERN = re.compile(r"\A(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,5})?|([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,4})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,3})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,2})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3}))?)?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::([0-9a-f]|[1-9a-f][0-9a-f]{1,3})?|(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){3}))))))\Z", re.DOTALL)
 
 
-evtx_list = ["17.evtx"]
+evtx_list = ["18.evtx"]
 
 #detect base64 commands
 def isBase64(command):
@@ -552,6 +552,62 @@ def detect_events_security_log(file_name):
                             print("\n__________ " + UtcTime1 + " __________ \n\n ", end='')
                             print(" [+] \033[0;31;47mPowershellRemoting via wsmprovhost Detected !! \033[0m\n ", end='')
                             print(" [+] Command Line : ( %s ) \n " % Command_line_2 , end='')
+                            print(" [+] Parent Process Command Line : ( %s ) \n " % ParentCommandline, end='')
+                            print(" [+] User Name : ( %s ) \n " % UserName_2, end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] File Info : ( %s ) \n " % Fileversion, end='')
+                            print(" [+] description : ( %s ) \n " % description, end='')
+                            print(" [+] Process MD5 : ( %s ) \n " % MD5, end='')
+                            print(" [+] ParentImage Path : ( %s ) \n " % Parentimage, end='')
+                            print(" [+] Process ID : ( %s ) \n " % Process_id, end='')
+                            print(" [+] Parent Process ID : ( %s ) \n " % ParentProcessid, end='')
+                            print("____________________________________________________\n")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+
+                # Detect Network Connection via Compiled HTML
+                if EventID[0]=="1":
+                    try:
+                        if len(User_Name[0][0])>0:
+                            UserName_2 = User_Name[0][0].strip()
+                            Process_id = Process_Id[0][0].strip()
+                            Command_line_2 = Command_line[0][0].strip()
+                            Fileversion = FileVersion[0][0].strip()
+                            hashes = Hashes[0][0].strip()
+                            description = Description[0][0].strip()
+                            computer = Computer_Name[0].strip()
+                            ParentProcessid = ParentProcessId[0][0].strip()
+                            Parentimage = ParentImage[0][0].strip()
+                            ParentCommandline = ParentCommandLine[0][0].strip()
+                            UtcTime1 = UtcTime[0][0].strip()
+
+                        if len(User_Name[0][1])>0:
+                            UserName_2 = User_Name[0][1]
+                            Process_id = Process_Id[0][1].strip()
+                            Command_line_2 = Command_line[0][1].strip()
+                            Fileversion = FileVersion[0][1].strip()
+                            hashes = Hashes[0][1].strip()
+                            description = Description[0][1].strip()
+                            computer = Computer_Name[1].strip()
+                            ParentProcessid = ParentProcessId[0][1].strip()
+                            Parentimage = ParentImage[0][1].strip()
+                            ParentCommandline = ParentCommandLine[0][1].strip()
+                            UtcTime1 = UtcTime[0][1].strip()
+
+
+                        hashes = re.findall(r'(?i)(?<![a-z0-9])[a-f0-9]{32}(?![a-z0-9])', hashes)
+                        MD5 = hashes[0].strip()
+                        Command = html.unescape(Command_line_2)
+                        ParentCommandline = html.unescape(ParentCommandline)
+
+
+                        # Detect Network Connection via Compiled HTML
+                        if "RunHTMLApplication" in Command and "hh.exe" in Parentimage and "chm" in ParentCommandline and "mshtml" in Command:
+                            print("\n__________ " + UtcTime1 + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mNetwork Connection via Compiled HTML Detected !! \033[0m\n ", end='')
+                            print(" [+] Command Line : ( %s ) \n " % Command , end='')
                             print(" [+] Parent Process Command Line : ( %s ) \n " % ParentCommandline, end='')
                             print(" [+] User Name : ( %s ) \n " % UserName_2, end='')
                             print(" [+] Computer Name : ( %s ) \n " % computer, end='')
