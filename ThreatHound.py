@@ -11,6 +11,7 @@ from pytz import timezone
 import html
 import base64
 import codecs
+import copy
 
 try:
     from evtx import PyEvtxParser
@@ -42,10 +43,6 @@ all_suspicious=["\\csc.exe",'whoami.exe','\\pl.exe','\\nc.exe','nmap.exe','psexe
 Susp_Path=['\\temp\\',' C:\Windows\System32\mshta.exe','/temp/','//windows//temp//','/windows/temp/','\\windows\\temp\\','\\appdata\\','/appdata/','//appdata//','//programdata//','\\programdata\\','/programdata/']
 
 Usual_Path=['\\Windows\\','/Windows/','//Windows//','Program Files','\\Windows\\SysWOW64\\','/Windows/SysWOW64/','//Windows//SysWOW64//','\\Windows\\Cluster\\','/Windows/Cluster/','//Windows//Cluster//']
-
-critical_services=["Software Protection","Network List Service","Network Location Awareness","Windows Event Log"]
-
-whitelisted=['MpKslDrv','CreateExplorerShellUnelevatedTask']
 
 #=======================
 #Regex for security logs
@@ -108,6 +105,14 @@ TokenElevationType_rex=re.compile('<Data Name=\"TokenElevationType\">(.*)</Data>
 PipeName_rex=re.compile("<Data Name=\"PipeName\">(.*)</Data>")
 # My ImageName Regex
 Image_rex=re.compile("<Data Name=\"Image\">(.*)</Data>")
+#
+ServicePrincipalNames_rex=re.compile("<Data Name=\"ServicePrincipalNames\">(.*)</Data>")
+#
+SamAccountName_rex=re.compile("<Data Name=\"SamAccountName\">(.*)</Data>")
+#
+NewTargetUserName_rex=re.compile("<Data Name=\"NewTargetUserName\">(.*)</Data>")
+#
+OldTargetUserName_rex=re.compile("<Data Name=\"OldTargetUserName\">(.*)</Data>")
 #======================
 
 Security_ID_rex = re.compile('<Data Name=\"SubjectUserSid\">(.*)</Data>|<SubjectUserSid>(.*)</SubjectUserSid>', re.IGNORECASE)
@@ -280,6 +285,12 @@ user_list = []
 user_list_2 = []
 sourceIp_list = []
 sourceIp_list_2 = []
+#cve-2021-42287 Detect
+REQUEST_TGT_CHECK_list = []
+New_Target_User_Name_Check_list = []
+SAM_ACCOUNT_NAME_CHECK_list = []
+ATTACK_REPLAY_CHECK_list = []
+
 
 # IPv4 regex
 IPv4_PATTERN = re.compile(r"\A\d+\.\d+\.\d+\.\d+\Z", re.DOTALL)
@@ -288,7 +299,7 @@ IPv4_PATTERN = re.compile(r"\A\d+\.\d+\.\d+\.\d+\Z", re.DOTALL)
 IPv6_PATTERN = re.compile(r"\A(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,5})?|([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,4})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,3})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,2})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3}))?)?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::([0-9a-f]|[1-9a-f][0-9a-f]{1,3})?|(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){3}))))))\Z", re.DOTALL)
 
 
-evtx_list = ["18.evtx"]
+evtx_list = ["19.evtx"]
 
 #detect base64 commands
 def isBase64(command):
@@ -315,6 +326,19 @@ def xml_records(filename):
                     yield to_lxml(record["data"]), None
                 except etree.XMLSyntaxError as e:
                     yield record["data"], e
+
+def checker(check):
+    if check == "REQUEST_TGT_CHECK":
+        REQUEST_TGT_CHECK_list.append("True")
+    if check == "New_Target_User_Name_Check":
+        New_Target_User_Name_Check_list.append("True")
+    if check == "SAM_ACCOUNT_NAME_CHECK":
+        SAM_ACCOUNT_NAME_CHECK_list.append("True")
+    if check == "ATTACK_REPLAY_CHECK":
+        ATTACK_REPLAY_CHECK_list.append("True")
+
+
+
 
 def detect_events_security_log(file_name):
     for file in file_name:
@@ -373,6 +397,10 @@ def detect_events_security_log(file_name):
                 TokenElevationType = TokenElevationType_rex.findall(record['data'])
                 PipeName2 = PipeName_rex.findall(record['data'])
                 ImageName2 = Image_rex.findall(record['data'])
+                ServicePrincipalNames = ServicePrincipalNames_rex.findall(record['data'])
+                SamAccountName = SamAccountName_rex.findall(record['data'])
+                NewTargetUserName = NewTargetUserName_rex.findall(record['data'])
+                OldTargetUserName = OldTargetUserName_rex.findall(record['data'])
                 #====================
 
                 Logon_Process = Logon_Process_rex.findall(record['data'])
@@ -410,6 +438,7 @@ def detect_events_security_log(file_name):
 
                 PASS = False
                 PASS1 = False
+
 
                 #Detect any log that contain suspicious process name or argument
                 if EventID[0]=="3":
@@ -940,6 +969,9 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
                         # PipeName
                         pipe = r'\.\pipe'
+                        # SMBEXEC
+                        SMBEXEC = r'cmd.exe /q /c echo cd'
+                        SMBEXEC2 = r' \\127.0.0.1\c$'
                         #Detect Privilege esclation "GetSystem"
                         if "cmd.exe /c echo" in Command_unescape.lower() and "%%1936" in TokenElevationType and "cmd.exe" in Process_Name.lower() and pipe in Command_unescape.lower():
                             print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
@@ -954,6 +986,17 @@ def detect_events_security_log(file_name):
                         if "cmd.exe" in Command_unescape.lower() and "%%1936" in TokenElevationType and "cmd.exe" in Process_Name.lower():
                             print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
                             print(" [+] \033[0;31;47mFound Suspicios Process Runing cmd Command On Full Privilege\033[0m\n ", end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] User Name : ( %s ) \n " % accountName, end='')
+                            print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
+                            print(" [+] Process Name : ( %s ) \n " % Process_Name, end='')
+                            print(" [+] Process Command Line : ( %s ) \n " % Command_unescape, end='')
+                            print("____________________________________________________\n")
+
+                        #Detect SMBEXEC
+                        if SMBEXEC in Command_unescape.lower() and SMBEXEC2 in Command_unescape.lower() and "%%1936" in TokenElevationType:
+                            print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mSMBEXEC Detected !!\033[0m\n ", end='')
                             print(" [+] Computer Name : ( %s ) \n " % computer, end='')
                             print(" [+] User Name : ( %s ) \n " % accountName, end='')
                             print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
@@ -1129,6 +1172,60 @@ def detect_events_security_log(file_name):
                     except Exception as e:
                         print("Error parsing Event", e)
 
+                #Start Of Detecting cve-2021-42287
+                if EventID[0]=="4741": #+ EventID[0]=="4673" + EventID[0]=="4742" + EventID[0]=="4781" + EventID[0]=="4768" + EventID[0]=="4781" and EventID[0]=="4769":
+                    try:
+                        if len(Account_Name[0])>0:
+                            ServicePrincipalNames = ServicePrincipalNames[0].strip()
+
+                        if "-" in ServicePrincipalNames:
+                            checker("ATTACK_REPLAY_CHECK")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+
+                # Detecting Sam Account name changed to domain controller name
+                if EventID[0]=="4742":
+                    try:
+                        if len(Account_Name[0])>0:
+                            SamAccountName = SamAccountName[0].strip()
+                            UserName = TargetAccount_Name[0][0].strip()
+
+                        if "-" not in SamAccountName:
+                            checker("SAM_ACCOUNT_NAME_CHECK")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+                # Verify Sam Account name changed to domain controller name
+                if EventID[0]=="4781":
+                    try:
+                        if len(Account_Name[0])>0:
+                            NewTargetUserName = NewTargetUserName[0].strip()
+                            computer = Computer_Name[0].strip()
+
+
+                        if NewTargetUserName in computer:
+                             checker("New_Target_User_Name_Check")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+                # Kerberos AS-REP Attack Detect
+                if EventID[0] == "4768":
+                    try:
+                        if len(TargetAccount_Name[0])>0:
+                            computer = Computer[0].strip()
+
+                        if serviceName == "krbtgt":
+                            checker("REQUEST_TGT_CHECK")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+################ end of CVE-2021-42278 DETECTION
+
 
                 #detect PasswordSpray Attack
                 if EventID[0] == "4648":
@@ -1152,6 +1249,42 @@ def detect_events_security_log(file_name):
                     except Exception as e:
                         print("Error parsing Event", e)
 
+
+        # FULL CVE-2021-42278 DETECTION
+        if "True" in REQUEST_TGT_CHECK_list and "True" in New_Target_User_Name_Check_list and "True" in SAM_ACCOUNT_NAME_CHECK_list and "True" in ATTACK_REPLAY_CHECK_list:
+            parser = PyEvtxParser(file)
+            for record in parser.records():
+                EventID2 = EventID_rex.findall(record['data'])
+                NewTargetUserName = NewTargetUserName_rex.findall(record['data'])
+                OldTargetUserName = OldTargetUserName_rex.findall(record['data'])
+                Computer_Name = Computer_Name_rex.findall(record['data'])
+                Target_Account_Domain=Account_Domain_Target_rex.findall(record['data'])
+                Account_Name = AccountName_rex.findall(record['data'])
+                if len(EventID2) > 0:
+                    if EventID2[0] == "4781":
+                        try:
+                            if len(Account_Name[0])>0:
+                                NewTargetUserName = NewTargetUserName[0].strip()
+                                computer = Computer_Name[0].strip()
+                                OldTargetUserName = OldTargetUserName[0].strip()
+                                target_account_domain = Target_Account_Domain[0][0].strip()
+                                accountName = Account_Name[0][0].strip()
+
+                            if OldTargetUserName in computer: #and "True" in REQUEST_TGT_CHECK_list and "True" in New_Target_User_Name_Check_list:# and "True" in SAM_ACCOUNT_NAME_CHECK_list and "True" in ATTACK_REPLAY_CHECK_list:
+                                print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
+                                print(" [+] \033[0;31;47mCVE-2021-42287 and CVE-2021-42278 DETCTED !!\033[0m\n ", end='')
+                                print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                                print(" [+] User Name : ( %s ) \n " % accountName, end='')
+                                print(" [+] New User Name : ( %s ) \n " % NewTargetUserName, end='')
+                                print(" [+] Old User Name : ( %s ) \n " % OldTargetUserName, end='')
+                                print(" [+] Domain Name : ( %s ) \n " % target_account_domain, end='')
+                                print("____________________________________________________\n")
+
+
+                        except Exception as e:
+                            print("Error parsing Event", e)
+    #### END
+
     # For Defrinceation and Detect the attack
     if range(len(user_list)) == range(len(user_list_2)) and range(len(sourceIp_list)) == range(len(sourceIp_list_2)):
         SprayUserDetector = 0
@@ -1168,6 +1301,7 @@ def detect_events_security_log(file_name):
             print("____________________________________________________\n")
 
 #========================================== END OF SPRAY Detect
+
 
 # Parsing Evtx File
 def parse_evtx(evtx_list):
