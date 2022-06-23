@@ -280,7 +280,7 @@ Security_Authentication_Summary=[{'User':[],'SID':[],'Number of Successful Login
 Logon_Events=[{'Date and Time':[],'timestamp':[],'Event ID':[],'Account Name':[],'Account Domain':[],'Logon Type':[],'Logon Process':[],'Source IP':[],'Workstation Name':[],'Computer Name':[],'Channel':[],'Original Event Log':[]}]
 
 EVTX_HEADER = b"\x45\x6C\x66\x46\x69\x6C\x65\x00"
-evtx_list = ["Sysmon-Operational.evtx"]
+evtx_list = []
 user_list = []
 user_list_2 = []
 sourceIp_list = []
@@ -299,7 +299,7 @@ IPv4_PATTERN = re.compile(r"\A\d+\.\d+\.\d+\.\d+\Z", re.DOTALL)
 IPv6_PATTERN = re.compile(r"\A(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,5})?|([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,4})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,3})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,2})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3}))?)?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::([0-9a-f]|[1-9a-f][0-9a-f]{1,3})?|(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){3}))))))\Z", re.DOTALL)
 
 
-evtx_list = ["19.evtx"]
+evtx_list2 = ["19.evtx"]
 
 #detect base64 commands
 def isBase64(command):
@@ -971,7 +971,10 @@ def detect_events_security_log(file_name):
                         pipe = r'\.\pipe'
                         # SMBEXEC
                         SMBEXEC = r'cmd.exe /q /c echo cd'
-                        SMBEXEC2 = r' \\127.0.0.1\c$'
+                        SMBEXEC2 = r'\\127.0.0.1\c$'
+                        wmiexec = r'cmd.exe /q /c'
+                        wmiexec2 = r'1> \\127.0.0.1\admin$\__'
+                        wmiexec3 = r'2>&1'
                         #Detect Privilege esclation "GetSystem"
                         if "cmd.exe /c echo" in Command_unescape.lower() and "%%1936" in TokenElevationType and "cmd.exe" in Process_Name.lower() and pipe in Command_unescape.lower():
                             print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
@@ -994,9 +997,20 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                         #Detect SMBEXEC
-                        if SMBEXEC in Command_unescape.lower() and SMBEXEC2 in Command_unescape.lower() and "%%1936" in TokenElevationType:
+                        if SMBEXEC in Command_unescape.lower() and SMBEXEC2 in Command_unescape.lower() and wmiexec3 in Command_unescape.lower() and "%%1936" in TokenElevationType:
                             print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
                             print(" [+] \033[0;31;47mSMBEXEC Detected !!\033[0m\n ", end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] User Name : ( %s ) \n " % accountName, end='')
+                            print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
+                            print(" [+] Process Name : ( %s ) \n " % Process_Name, end='')
+                            print(" [+] Process Command Line : ( %s ) \n " % Command_unescape, end='')
+                            print("____________________________________________________\n")
+
+                        #Detect wmiexec variation
+                        if wmiexec in Command_unescape.lower() and wmiexec2 in Command_unescape.lower() and "%%1936" in TokenElevationType:
+                            print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mWMIEXEC Detected !!\033[0m\n ", end='')
                             print(" [+] Computer Name : ( %s ) \n " % computer, end='')
                             print(" [+] User Name : ( %s ) \n " % accountName, end='')
                             print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
@@ -1305,40 +1319,55 @@ def detect_events_security_log(file_name):
 
 # Parsing Evtx File
 def parse_evtx(evtx_list):
+    try:
+        count = 0
+        record_sum = 0
+        evtx = None
+        for evtx_file in evtx_list:
+            if evtx is None:
+                with open(evtx_file, "rb") as fb:
+                    fb_data = fb.read(8)
+                    if fb_data != EVTX_HEADER:
+                        sys.exit("[!] This file is not EVTX format {0}.".format(evtx_file))
 
-    count = 0
-    record_sum = 0
-    evtx = None
-    for evtx_file in evtx_list:
-        if evtx is None:
-            with open(evtx_file, "rb") as fb:
-                fb_data = fb.read(8)
-                if fb_data != EVTX_HEADER:
-                    sys.exit("[!] This file is not EVTX format {0}.".format(evtx_file))
+                with open(evtx_file, "rb") as evtx:
+                    parser = PyEvtxParser(evtx)
+                    records = list(parser.records())
+                    record_sum += len(records)
 
-            with open(evtx_file, "rb") as evtx:
-                parser = PyEvtxParser(evtx)
-                records = list(parser.records())
-                record_sum += len(records)
+        print("[+] Last record number is {0}.".format(record_sum))
 
-    print("[+] Last record number is {0}.".format(record_sum))
+        # Parse Event log
+        print("[+] Start parsing the EVTX file.")
 
-    # Parse Event log
-    print("[+] Start parsing the EVTX file.")
+        for evtx_file in evtx_list:
+            print("[+] Parse the EVTX file {0}.".format(evtx_file))
 
-    for evtx_file in evtx_list:
-        print("[+] Parse the EVTX file {0}.".format(evtx_file))
+            for record, err in xml_records(evtx_file):
+                if err is not None:
+                    continue
+                count += 1
 
-        for record, err in xml_records(evtx_file):
-            if err is not None:
-                continue
-            count += 1
+                if evtx_file == evtx_file:
+                    sys.stdout.write("\r[+] Now loading {0} records.".format(count))
+                    sys.stdout.flush()
 
-            if not count % 100:
-                sys.stdout.write("\r[+] Now loading {0} records.".format(count))
-                sys.stdout.flush()
-
-    detect_events_security_log(evtx_list)
+        detect_events_security_log(evtx_list)
+    except Exception as e:
+        print("Opps !")
+        print("Enter a Correct Path")
 
 
-parse_evtx(evtx_list)
+#parse_evtx(evtx_list2)
+def title():
+    print('+------------------------------------------')
+    print('+  \033[34mThis Tool Made BY: Mohamed Alzhrani // http://github.com/MazX0p      \033[0m')
+    print('+  \033[34m-\033[0m')
+    print('+  \033[36m-\033[0m')
+    print('+------------------------------------------')
+
+if __name__ == '__main__':
+    title()
+    file = str(input("\033[35mEnter EVTX File With Full Path \nFile:    >>> \033[0m"))
+    evtx_list.append(file)
+    parse_evtx(evtx_list)
