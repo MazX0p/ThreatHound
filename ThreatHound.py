@@ -1,3 +1,8 @@
+# if you found my source code, i dosen't try my best to encrypt it
+# but you need to know the total hours i speend here : 2160
+# dont share my code please, and contact me if u add more detections
+# Mohamed Alzhrani
+# https://github.com/MazX0p
 import sys
 import csv
 import re
@@ -12,6 +17,8 @@ import html
 import base64
 import codecs
 import copy
+import random
+from time import sleep
 
 try:
     from evtx import PyEvtxParser
@@ -1358,16 +1365,110 @@ def parse_evtx(evtx_list):
         print("Enter a Correct Path")
 
 
+
+banner = '''
+
+████████╗██╗░░██╗██████╗░███████╗░█████╗░████████╗  
+╚══██╔══╝██║░░██║██╔══██╗██╔════╝██╔══██╗╚══██╔══╝  
+░░░██║░░░███████║██████╔╝█████╗░░███████║░░░██║░░░  
+░░░██║░░░██╔══██║██╔══██╗██╔══╝░░██╔══██║░░░██║░░░  
+░░░██║░░░██║░░██║██║░░██║███████╗██║░░██║░░░██║░░░  
+░░░╚═╝░░░╚═╝░░╚═╝╚═╝░░╚═╝╚══════╝╚═╝░░╚═╝░░░╚═╝░░░  
+
+░░░░░░░░░██╗░░██╗░█████╗░██╗░░░██╗███╗░░██╗██████╗░
+░░░░░░░░░██║░░██║██╔══██╗██║░░░██║████╗░██║██╔══██╗
+░░░░░░░░░███████║██║░░██║██║░░░██║██╔██╗██║██║░░██║
+░░░░░░░░░██╔══██║██║░░██║██║░░░██║██║╚████║██║░░██║
+██╗██╗██╗██║░░██║╚█████╔╝╚██████╔╝██║░╚███║██████╔╝
+╚═╝╚═╝╚═╝╚═╝░░╚═╝░╚════╝░░╚═════╝░╚═╝░░╚══╝╚═════╝░
+'''
 #parse_evtx(evtx_list2)
 def title():
+    print(banner)
     print('+------------------------------------------')
     print('+  \033[34mThis Tool Made BY: Mohamed Alzhrani // http://github.com/MazX0p      \033[0m')
     print('+  \033[34m-\033[0m')
     print('+  \033[36m-\033[0m')
     print('+------------------------------------------')
 
+class bcolor:
+    OKBLUE = '\033[94m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    CBLACK = '\33[30m'
+    CRED = '\33[31m'
+    RED = '\33[31m'
+    CGREEN = '\33[32m'
+    CYELLOW = '\33[33m'
+    CBLUE = '\33[34m'
+    BLUE = '\33[34m'
+    CVIOLET = '\33[35m'
+    CBEIGE = '\33[36m'
+    CWHITE = '\33[37m'
+
+
+def LOGO():
+    bcolor_random = [bcolor.CBLUE, bcolor.CVIOLET, bcolor.CWHITE, bcolor.OKBLUE, bcolor.CGREEN, bcolor.WARNING,
+                    bcolor.CRED, bcolor.CBEIGE]
+    random.shuffle(bcolor_random)
+    x = bcolor_random[0] + """
+
+████████╗██╗░░██╗██████╗░███████╗░█████╗░████████╗  ██╗░░██╗░█████╗░██╗░░░██╗███╗░░██╗██████╗░
+╚══██╔══╝██║░░██║██╔══██╗██╔════╝██╔══██╗╚══██╔══╝  ██║░░██║██╔══██╗██║░░░██║████╗░██║██╔══██╗
+░░░██║░░░███████║██████╔╝█████╗░░███████║░░░██║░░░  ███████║██║░░██║██║░░░██║██╔██╗██║██║░░██║
+░░░██║░░░██╔══██║██╔══██╗██╔══╝░░██╔══██║░░░██║░░░  ██╔══██║██║░░██║██║░░░██║██║╚████║██║░░██║
+░░░██║░░░██║░░██║██║░░██║███████╗██║░░██║░░░██║░░░  ██║░░██║╚█████╔╝╚██████╔╝██║░╚███║██████╔╝
+░░░╚═╝░░░╚═╝░░╚═╝╚═╝░░╚═╝╚══════╝╚═╝░░╚═╝░░░╚═╝░░░  ╚═╝░░╚═╝░╚════╝░░╚═════╝░╚═╝░░╚══╝╚═════╝░
+
+\n"""
+
+    for c in x:
+        print(c, end='')
+        sys.stdout.flush()
+        sleep(0.0004)
+    y = "\t||||||||||||||||||||||||||||||||||||||||||||||||||||||\n"
+    for c in y:
+        print(bcolor.CRED + c, end='')
+        sys.stdout.flush()
+        sleep(0.0005)
+    y = "\t||                   THREAT HOUND                   ||\n"
+    for c in y:
+        print(bcolor.CWHITE + c, end='')
+        sys.stdout.flush()
+        sleep(0.0005)
+    x = "\t||                                                  ||\n"
+    for c in x:
+        print(bcolor.CWHITE + c, end='')
+        sys.stdout.flush()
+        sleep(0.0005)
+    z = "\t||        This Tool Made BY: Mohamed Alzhrani       ||\n"
+    for c in z:
+        print(bcolor.CWHITE + c, end='')
+        sys.stdout.flush()
+        sleep(0.0005)
+    y = "\t||||||||||||||||||||||||||||||||||||||||||||||||||||||\n"
+    for c in y:
+        print(bcolor.CRED + c, end='')
+        sys.stdout.flush()
+        sleep(0.0005)
+    y = "\t||              http://github.com/MazX0p            ||\n"
+    for c in y:
+        print(bcolor.CWHITE + c, end='')
+        sys.stdout.flush()
+        sleep(0.0005)
+
+    y = "\t||||||||||||||||||||||||||||||||||||||||||||||||||||||\n"
+    for c in y:
+        print(bcolor.CRED + c, end='')
+        sys.stdout.flush()
+        sleep(0.0065)
+
+
 if __name__ == '__main__':
-    title()
+    LOGO()
     file = str(input("\033[35mEnter EVTX File With Full Path \nFile:    >>> \033[0m"))
     evtx_list.append(file)
     parse_evtx(evtx_list)
