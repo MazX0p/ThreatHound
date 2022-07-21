@@ -982,6 +982,9 @@ def detect_events_security_log(file_name):
                         wmiexec = r'cmd.exe /q /c'
                         wmiexec2 = r'1> \\127.0.0.1\admin$\__'
                         wmiexec3 = r'2>&1'
+                        msiexec = r'msiexec.exe /i Site24x7WindowsAgent.msi EDITA1=asdasd /qn'
+                        msiexec2 = r'comsvcs.dll MiniDump  C:\windows\temp\logctl.zip full'
+                        msiexec3 = r'windows\temp\ekern.exe'
                         #Detect Privilege esclation "GetSystem"
                         if "cmd.exe /c echo" in Command_unescape.lower() and "%%1936" in TokenElevationType and "cmd.exe" in Process_Name.lower() and pipe in Command_unescape.lower():
                             print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
@@ -1018,6 +1021,39 @@ def detect_events_security_log(file_name):
                         if wmiexec in Command_unescape.lower() and wmiexec2 in Command_unescape.lower() and "%%1936" in TokenElevationType:
                             print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
                             print(" [+] \033[0;31;47mWMIEXEC Detected !!\033[0m\n ", end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] User Name : ( %s ) \n " % accountName, end='')
+                            print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
+                            print(" [+] Process Name : ( %s ) \n " % Process_Name, end='')
+                            print(" [+] Process Command Line : ( %s ) \n " % Command_unescape, end='')
+                            print("____________________________________________________\n")
+
+                        #Detect CVE-2021-44077
+                        if msiexec in Command_unescape:
+                            print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mCVE-2021-44077 first stage Detected !!\033[0m\n ", end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] User Name : ( %s ) \n " % accountName, end='')
+                            print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
+                            print(" [+] Process Name : ( %s ) \n " % Process_Name, end='')
+                            print(" [+] Process Command Line : ( %s ) \n " % Command_unescape, end='')
+                            print("____________________________________________________\n")
+
+                        #Detect CVE-2021-44077 second
+                        if msiexec2 in Command_unescape:
+                            print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mCVE-2021-44077 2th stage Detected !!\033[0m\n ", end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] User Name : ( %s ) \n " % accountName, end='')
+                            print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
+                            print(" [+] Process Name : ( %s ) \n " % Process_Name, end='')
+                            print(" [+] Process Command Line : ( %s ) \n " % Command_unescape, end='')
+                            print("____________________________________________________\n")
+
+                        #Detect CVE-2021-44077 3th
+                        if msiexec3 in Command_unescape:
+                            print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mCVE-2021-44077 3th stage Detected !!\033[0m\n ", end='')
                             print(" [+] Computer Name : ( %s ) \n " % computer, end='')
                             print(" [+] User Name : ( %s ) \n " % accountName, end='')
                             print(" [+] Process ID : ( %s ) \n " % ProcessId, end='')
