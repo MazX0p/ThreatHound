@@ -120,6 +120,23 @@ SamAccountName_rex=re.compile("<Data Name=\"SamAccountName\">(.*)</Data>")
 NewTargetUserName_rex=re.compile("<Data Name=\"NewTargetUserName\">(.*)</Data>")
 #
 OldTargetUserName_rex=re.compile("<Data Name=\"OldTargetUserName\">(.*)</Data>")
+# My Call Trace regex
+CallTrace_rex=re.compile("<Data Name=\"CallTrace\">(.*)</Data>")
+# My GrantedAccess Regex
+GrantedAccess_rex=re.compile("<Data Name=\"GrantedAccess\">(.*)</Data>")
+# My TargetImage Regex
+TargetImage_rex=re.compile("<Data Name=\"TargetImage\">(.*)</Data>")
+# My SourceImage Regex
+SourceImage_rex=re.compile("<Data Name=\"SourceImage\">(.*)</Data>")
+#
+SourceProcessId_rex=re.compile("<Data Name=\"SourceProcessId\">(.*)</Data>")
+#
+SourceProcessGuid_rex=re.compile("<Data Name=\"SourceProcessGuid\">(.*)</Data>")
+#
+TargetProcessGuid_rex=re.compile("<Data Name=\"TargetProcessGuid\">(.*)</Data>")
+#
+TargetProcessId_rex=re.compile("<Data Name=\"TargetProcessId\">(.*)</Data>")
+
 #======================
 
 Security_ID_rex = re.compile('<Data Name=\"SubjectUserSid\">(.*)</Data>|<SubjectUserSid>(.*)</SubjectUserSid>', re.IGNORECASE)
@@ -244,7 +261,6 @@ Sysmon_Hashes_MD5_rex=re.compile("<Data Name=\"MD5=(.*),")
 Sysmon_Hashes_SHA256_rex=re.compile("<Data Name=\"SHA256=(.*)")
 Sysmon_ParentProcessGuid_rex=re.compile("<Data Name=\"ParentProcessGuid\">(.*)</Data>")
 Sysmon_ParentProcessId_rex=re.compile("<Data Name=\"ParentProcessId\">(.*)</Data>")
-Sysmon_ParentImage_rex=re.compile("<Data Name=\"ParentImage\">(.*)</Data>")
 Sysmon_ParentCommandLine_rex=re.compile("<Data Name=\"ParentCommandLine\">(.*)</Data>")
 Sysmon_CurrentDirectory_rex=re.compile("<Data Name=\"CurrentDirectory\">(.*)</Data>")
 Sysmon_OriginalFileName_rex=re.compile("<Data Name=\"OriginalFileName\">(.*)</Data>")
@@ -263,17 +279,9 @@ Sysmon_DestinationPort_rex=re.compile("<Data Name=\"DestinationPort\">(.*)</Data
 #Sysmon  event ID 8
 Sysmon_StartFunction_rex=re.compile("<Data Name=\"StartFunction\">(.*)</Data>")
 Sysmon_StartModule_rex=re.compile("<Data Name=\"StartModule\">(.*)</Data>")
-Sysmon_TargetImage_rex=re.compile("<Data Name=\"TargetImage\">(.*)</Data>")
-Sysmon_SourceImage_rex=re.compile("<Data Name=\"SourceImage\">(.*)</Data>")
-Sysmon_SourceProcessId_rex=re.compile("<Data Name=\"SourceProcessId\">(.*)</Data>")
-Sysmon_SourceProcessGuid_rex=re.compile("<Data Name=\"SourceProcessGuid\">(.*)</Data>")
-Sysmon_TargetProcessGuid_rex=re.compile("<Data Name=\"TargetProcessGuid\">(.*)</Data>")
-Sysmon_TargetProcessId_rex=re.compile("<Data Name=\"TargetProcessId\">(.*)</Data>")
 
 #########
 Sysmon_ImageLoaded_rex=re.compile("<Data Name=\"ImageLoaded\">(.*)</Data>")
-Sysmon_GrantedAccess_rex=re.compile("<Data Name=\"GrantedAccess\">(.*)</Data>")
-Sysmon_CallTrace_rex=re.compile("<Data Name=\"CallTrace\">(.*)</Data>")
 Sysmon_Details_rex=re.compile("<Data Name=\"Details\">(.*)</Data>")
 
 Sysmon_ImageLoaded_rex=re.compile("<Data Name=\"ImageLoaded\">(.*)</Data>")
@@ -408,6 +416,14 @@ def detect_events_security_log(file_name):
                 SamAccountName = SamAccountName_rex.findall(record['data'])
                 NewTargetUserName = NewTargetUserName_rex.findall(record['data'])
                 OldTargetUserName = OldTargetUserName_rex.findall(record['data'])
+                TargetProcessId = TargetProcessId_rex.findall(record['data'])
+                TargetProcessGuid = TargetProcessGuid_rex.findall(record['data'])
+                SourceProcessGuid = SourceProcessGuid_rex.findall(record['data'])
+                SourceProcessId = SourceProcessId_rex.findall(record['data'])
+                SourceImage = SourceImage_rex.findall(record['data'])
+                TargetImage = TargetImage_rex.findall(record['data'])
+                GrantedAccess = GrantedAccess_rex.findall(record['data'])
+                CallTrace = CallTrace_rex.findall(record['data'])
                 #====================
 
                 Logon_Process = Logon_Process_rex.findall(record['data'])
@@ -551,6 +567,60 @@ def detect_events_security_log(file_name):
 
                 # Detect PowershellRemoting via wsmprovhost
                 elif EventID[0]=="1":
+                    try:
+                        if len(User_Name[0][0])>0:
+                            UserName_2 = User_Name[0][0].strip()
+                            Process_id = Process_Id[0][0].strip()
+                            Command_line_2 = Command_line[0][0].strip()
+                            Fileversion = FileVersion[0][0].strip()
+                            hashes = Hashes[0][0].strip()
+                            description = Description[0][0].strip()
+                            computer = Computer_Name[0].strip()
+                            ParentProcessid = ParentProcessId[0][0].strip()
+                            Parentimage = ParentImage[0][0].strip()
+                            ParentCommandline = ParentCommandLine[0][0].strip()
+                            UtcTime1 = UtcTime[0][0].strip()
+
+                        if len(User_Name[0][1])>0:
+                            UserName_2 = User_Name[0][1]
+                            Process_id = Process_Id[0][1].strip()
+                            Command_line_2 = Command_line[0][1].strip()
+                            Fileversion = FileVersion[0][1].strip()
+                            hashes = Hashes[0][1].strip()
+                            description = Description[0][1].strip()
+                            computer = Computer_Name[1].strip()
+                            ParentProcessid = ParentProcessId[0][1].strip()
+                            Parentimage = ParentImage[0][1].strip()
+                            ParentCommandline = ParentCommandLine[0][1].strip()
+                            UtcTime1 = UtcTime[0][1].strip()
+
+
+                        hashes = re.findall(r'(?i)(?<![a-z0-9])[a-f0-9]{32}(?![a-z0-9])', hashes)
+                        MD5 = hashes[0].strip()
+
+
+                        # Detect PowershellRemoting via wsmprovhost
+                        if "wsmprovhost.exe" in Parentimage and "wsmprovhost.exe -Embedding" in ParentCommandline:
+                            print("\n__________ " + UtcTime1 + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mPowershellRemoting via wsmprovhost Detected !! \033[0m\n ", end='')
+                            print(" [+] Command Line : ( %s ) \n " % Command_line_2 , end='')
+                            print(" [+] Parent Process Command Line : ( %s ) \n " % ParentCommandline, end='')
+                            print(" [+] User Name : ( %s ) \n " % UserName_2, end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] File Info : ( %s ) \n " % Fileversion, end='')
+                            print(" [+] description : ( %s ) \n " % description, end='')
+                            print(" [+] Process MD5 : ( %s ) \n " % MD5, end='')
+                            print(" [+] ParentImage Path : ( %s ) \n " % Parentimage, end='')
+                            print(" [+] Process ID : ( %s ) \n " % Process_id, end='')
+                            print(" [+] Parent Process ID : ( %s ) \n " % ParentProcessid, end='')
+                            print("____________________________________________________\n")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+
+                # Detect PowershellRemoting via wsmprovhost
+                if EventID[0]=="10":
                     try:
                         if len(User_Name[0][0])>0:
                             UserName_2 = User_Name[0][0].strip()
@@ -777,6 +847,23 @@ def detect_events_security_log(file_name):
                             print(" [+] Process ID : ( %s ) \n " % Process_id, end='')
                             print(" [+] Parent Process ID : ( %s ) \n " % ParentProcessid, end='')
                             print("____________________________________________________\n")
+
+                        # Detect suspicious winlogon.exe SMBV3 CVE-2020-0769
+                        if "winlogon.exe" in Parentimage and "cmd.exe" in ImageName.lower(): # TODO make it more strong, and check the rundll32 of it
+                            print("\n__________ " + UtcTime1 + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mSMBV3 CVE-2020-0769 !! \033[0m\n ", end='')
+                            print(" [+] Command Line : ( %s ) \n " % Command , end='')
+                            print(" [+] Parent Process Command Line : ( %s ) \n " % ParentCommandline, end='')
+                            print(" [+] User Name : ( %s ) \n " % UserName_2, end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] File Info : ( %s ) \n " % Fileversion, end='')
+                            print(" [+] description : ( %s ) \n " % description, end='')
+                            print(" [+] Process MD5 : ( %s ) \n " % MD5, end='')
+                            print(" [+] ParentImage Path : ( %s ) \n " % Parentimage, end='')
+                            print(" [+] Process ID : ( %s ) \n " % Process_id, end='')
+                            print(" [+] Parent Process ID : ( %s ) \n " % ParentProcessid, end='')
+                            print("____________________________________________________\n")
+
 
                     except Exception as e:
                         print("Error parsing Event", e)
@@ -1186,6 +1273,56 @@ def detect_events_security_log(file_name):
                             print(" [+] Image Name : ( %s ) \n " % ImageName2, end='')
                             print(" [+] Process ID : ( %s ) \n " % Process_id, end='')
                             print(" [+] PipeName : ( %s ) \n " % PipeName2, end='')
+                            print("____________________________________________________\n")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+                #Detect PsExec Pipe Creation
+                if EventID[0]=="17":
+                    try:
+                        if len(Computer_Name[0])>0:
+                            computer = Computer_Name[0].strip()
+                            Process_id = Process_Id[0][0].strip()
+                            PipeName2 = PipeName2[0].strip()
+                            ImageName2 = ImageName2[0].strip()
+                            UtcTime1 = UtcTime[0][0].strip()
+
+                        # Detect PsExec Pipe Creation
+                        if "\psexesvc" in PipeName2.lower() and "stderr" in PipeName2.lower() or "\psexesvc" in PipeName2.lower() and "stdin" in PipeName2.lower() or "\psexesvc" in PipeName2.lower() and "stdout" in PipeName2.lower():
+                            print("\n__________ " + UtcTime1 + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mPsExec Pipe Creation Detected !! \033[0m\n ", end='')
+                            print(" [+] Computer Name : ( %s ) \n " % computer, end='')
+                            print(" [+] Image Name : ( %s ) \n " % ImageName2, end='')
+                            print(" [+] Process ID : ( %s ) \n " % Process_id, end='')
+                            print(" [+] PipeName : ( %s ) \n " % PipeName2, end='')
+                            print("____________________________________________________\n")
+
+                    except Exception as e:
+                        print("Error parsing Event", e)
+
+                #Detect SMBV3 CVE-2020-0769
+                if EventID[0]=="10":
+                    try:
+                        if len(SourceImage[0])>0:
+                            SourceProcessId = SourceProcessId[0].strip()
+                            SourceImage = SourceImage[0].strip()
+                            TargetProcessId = TargetProcessId[0].strip()
+                            TargetImage = TargetImage[0].strip()
+                            GrantedAccess = GrantedAccess[0].strip()
+                            CallTrace = CallTrace[0].strip()
+                            UtcTime1 = UtcTime[0][0].strip()
+
+                        # Detect SMBV3 CVE-2020-0769
+                        if "0x1fffff" in GrantedAccess and "winlogon.exe" in TargetImage and "ntdll.dll" in CallTrace and "KERNELBASE.dll" in CallTrace:
+                            print("\n__________ " + UtcTime1 + " __________ \n\n ", end='')
+                            print(" [+] \033[0;31;47mSTART OF CVE-2020-0769 Detected !! \033[0m\n ", end='')
+                            print(" [+] Source Process Id : ( %s ) \n " % SourceProcessId, end='')
+                            print(" [+] Source Image : ( %s ) \n " % SourceImage, end='')
+                            print(" [+] Target Process Id : ( %s ) \n " % TargetProcessId, end='')
+                            print(" [+] Target Image : ( %s ) \n " % TargetImage, end='')
+                            print(" [+] Granted Access : ( %s ) \n " % GrantedAccess, end='')
+                            print(" [+] CallTrace : ( %s ) \n " % CallTrace, end='')
                             print("____________________________________________________\n")
 
                     except Exception as e:
