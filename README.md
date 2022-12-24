@@ -1,6 +1,27 @@
 # ThreatHound
 
-Under Devloping
+# I’ve built the following:
+- A dedicated backend to support Sigma rules for python
+- A dedicated backend for parsing evtx for python 
+- A dedicated backend to match between evtx and the Sigma rules
+
+# Features of the tool:
+- Automation for Threat hunting, Compromise Assessment, and Incident Response for the Windows Event Logs
+- Downloading and updating the Sigma rules daily from the source
+- More then 50 detection rules included
+- support for more then 1500 detection rules for Sigma
+- Support for new sigma rules dynamically and adding it to the detection rules
+- Saving of all the outputs in JSON format
+- Easily add any detection rules you prefer 
+- you can add new event log source type in mapping.py easily 
+
+# To-do:
+- Support for Sigma rules dedicated for DNS query 
+- Modifying the speed of algorithm dedicated for the detection and making it faster
+- Adding JSON output that supports Splunk
+
+# installiton:
+Easy just Run the code :)
 
 
 https://user-images.githubusercontent.com/54814433/173213830-a32d7264-1615-4943-bad1-76c5763220f0.mp4
