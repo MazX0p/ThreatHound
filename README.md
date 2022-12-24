@@ -21,8 +21,17 @@
 - Adding JSON output that supports Splunk
 
 # installiton:
-Easy just Run the code :)
+```sh
+$ git clone https://github.com/MazX0p/ThreatHound.git
+$ cd ThreatHound
+$ pip install - r requirements.txt
+$ pyhton3 ThreatHound.py
+```
+* Note: glob doesn't support get path of the directory if it has spaces on folder names, please ensure the path of the tool is without spaces (folders names)
 
+
+
+# Demo:
 
 https://user-images.githubusercontent.com/54814433/173213830-a32d7264-1615-4943-bad1-76c5763220f0.mp4
 
