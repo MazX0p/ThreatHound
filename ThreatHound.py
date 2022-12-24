@@ -1,6 +1,5 @@
-# if you found my source code, i dosen't try my best to encrypt it
-# but you need to know the total hours i speend here : 2160
-# dont share my code please, and contact me if u add more detections
+# total hours i speend here : 8472.1
+# contact me if u add more detections
 # Mohamed Alzhrani
 # https://github.com/MazX0p
 import sys
@@ -18,6 +17,7 @@ import base64
 import codecs
 import copy
 import random
+import sigma_manager
 from time import sleep
 
 try:
@@ -38,6 +38,28 @@ try:
 except ImportError:
     has_pandas = False
 
+
+class bcolor:
+    OKBLUE = '\033[94m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    CBLACK = '\33[30m'
+    CRED = '\33[31m'
+    RED = '\33[31m'
+    CGREEN = '\33[32m'
+    CYELLOW = '\33[33m'
+    CBLUE = '\33[34m'
+    BLUE = '\33[34m'
+    CVIOLET = '\33[35m'
+    CBEIGE = '\33[36m'
+    CWHITE = '\33[37m'
+
+#=======================
+# Initiate list of JSON containing matched rules
+
 Susp_exe=["\\mshta.exe","\\regsvr32.exe","\\csc.exe",'whoami.exe','\\pl.exe','\\nc.exe','nmap.exe','psexec.exe','plink.exe','mimikatz','procdump.exe',' dcom.exe',' Inveigh.exe',' LockLess.exe',' Logger.exe',' PBind.exe',' PS.exe',' Rubeus.exe',' RunasCs.exe',' RunAs.exe',' SafetyDump.exe',' SafetyKatz.exe',' Seatbelt.exe',' SExec.exe',' SharpApplocker.exe',' SharpChrome.exe',' SharpCOM.exe',' SharpDPAPI.exe',' SharpDump.exe',' SharpEdge.exe',' SharpEDRChecker.exe',' SharPersist.exe',' SharpHound.exe',' SharpLogger.exe',' SharpPrinter.exe','EfsPotato.exe',' SharpSC.exe',' SharpSniper.exe',' SharpSocks.exe',' SharpSSDP.exe',' SharpTask.exe',' SharpUp.exe',' SharpView.exe',' SharpWeb.exe',' SharpWMI.exe',' Shhmon.exe',' SweetPotato.exe',' Watson.exe',' WExec.exe','7zip.exe', 'HOSTNAME.EXE', 'hostname.exe']
 
 Susp_commands=['FromBase64String','DomainPasswordSpray','PasswordSpray','Password','Get-WMIObject','Get-GPPPassword','Get-Keystrokes','Get-TimedScreenshot','Get-VaultCredential','Get-ServiceUnquoted','Get-ServiceEXEPerms','Get-ServicePerms','Get-RegAlwaysInstallElevated','Get-RegAutoLogon','Get-UnattendedInstallFiles','Get-Webconfig','Get-ApplicationHost','Get-PassHashes','Get-LsaSecret','Get-Information','Get-PSADForestInfo','Get-KerberosPolicy','Get-PSADForestKRBTGTInfo','Get-PSADForestInfo','Get-KerberosPolicy','Invoke-Command','Invoke-Expression','iex(','Invoke-Shellcode','Invoke--Shellcode','Invoke-ShellcodeMSIL','Invoke-MimikatzWDigestDowngrade','Invoke-NinjaCopy','Invoke-CredentialInjection','Invoke-TokenManipulation','Invoke-CallbackIEX','Invoke-PSInject','Invoke-DllEncode','Invoke-ServiceUserAdd','Invoke-ServiceCMD','Invoke-ServiceStart','Invoke-ServiceStop','Invoke-ServiceEnable','Invoke-ServiceDisable','Invoke-FindDLLHijack','Invoke-FindPathHijack','Invoke-AllChecks','Invoke-MassCommand','Invoke-MassMimikatz','Invoke-MassSearch','Invoke-MassTemplate','Invoke-MassTokens','Invoke-ADSBackdoor','Invoke-CredentialsPhish','Invoke-BruteForce','Invoke-PowerShellIcmp','Invoke-PowerShellUdp','Invoke-PsGcatAgent','Invoke-PoshRatHttps','Invoke-PowerShellTcp','Invoke-PoshRatHttp','Invoke-PowerShellWmi','Invoke-PSGcat','Invoke-Encode','Invoke-Decode','Invoke-CreateCertificate','Invoke-NetworkRelay','EncodedCommand','New-ElevatedPersistenceOption','wsman','Enter-PSSession','DownloadString','DownloadFile','Out-Word','Out-Excel','Out-Java','Out-Shortcut','Out-CHM','Out-HTA','Out-Minidump','HTTP-Backdoor','Find-AVSignature','DllInjection','ReflectivePEInjection','Base64','System.Reflection','System.Management','Restore-ServiceEXE','Add-ScrnSaveBackdoor','Gupt-Backdoor','Execute-OnTime','DNS_TXT_Pwnage','Write-UserAddServiceBinary','Write-CMDServiceBinary','Write-UserAddMSI','Write-ServiceEXE','Write-ServiceEXECMD','Enable-DuplicateToken','Remove-Update','Execute-DNSTXT-Code','Download-Execute-PS','Execute-Command-MSSQL','Download_Execute','Copy-VSS','Check-VM','Create-MultipleSessions','Run-EXEonRemote','Port-Scan','Remove-PoshRat','TexttoEXE','Base64ToString','StringtoBase64','Do-Exfiltration','Parse_Keys','Add-Exfiltration','Add-Persistence','Remove-Persistence','Find-PSServiceAccounts','Discover-PSMSSQLServers','Discover-PSMSExchangeServers','Discover-PSInterestingServices','Discover-PSMSExchangeServers','Discover-PSInterestingServices','Mimikatz','powercat','powersploit','PowershellEmpire','GetProcAddress','ICM','.invoke',' -e ','hidden','-w hidden','Invoke-Obfuscation-master','Out-EncodedWhitespaceCommand','Out-Encoded',"-EncodedCommand","-enc","-w hidden","[Convert]::FromBase64String","iex(","New-Object","Net.WebClient","-windowstyle hidden","DownloadFile","DownloadString","Invoke-Expression","Net.WebClient","-Exec bypass" ,"-ExecutionPolicy bypass"]
@@ -53,6 +75,7 @@ Usual_Path=['\\Windows\\','/Windows/','//Windows//','Program Files','\\Windows\\
 
 #=======================
 #Regex for security logs
+MatchedRulesAgainstLogs = dict()
 
 EventID_rex = re.compile('<EventID.*>(.*)<\/EventID>', re.IGNORECASE)
 
@@ -63,8 +86,10 @@ Logon_Type_rex = re.compile('<Data Name=\"LogonType\">(.*)</Data>|<LogonType>(.*
 User_Name_rex = re.compile('<Data Name=\"User\">(.*)</Data>|<User>(.*)</User>', re.IGNORECASE)
 ProcessId_rex = re.compile('<Data Name=\"ProcessId\">(.*)</Data>|<ProcessId>(.*)</ProcessId>', re.IGNORECASE)
 DestinationIp_rex = re.compile('<Data Name=\"DestinationIp\">(.*)</Data>|<DestinationIp>(.*)</DestinationIp>', re.IGNORECASE)
+Destination_Is_Ipv6_rex = re.compile('<Data Name=\"DestinationIsIpv6\">(.*)</Data>|<DestinationIsIpv6>(.*)</DestinationIsIpv6>', re.IGNORECASE)
 Source_Ip_Address_rex = re.compile('<Data Name=\"SourceIp\">(.*)</Data>|<SourceIp>(.*)</SourceIp>', re.IGNORECASE)
-UtcTime_rex = re.compile('<Data Name=\"UtcTime\">(.*)</Data>|<UtcTime>(.*)</UtcTime>', re.IGNORECASE)
+# UtcTime_rex = re.compile('<Data Name=\"UtcTime\">(.*)</Data>|<UtcTime>(.*)</UtcTime>|<TimeCreated SystemTime=\"(.*)\n    </TimeCreated>', re.IGNORECASE)
+UtcTime_rex = re.compile('<TimeCreated SystemTime=\"(.*)\">\n    </TimeCreated>', re.IGNORECASE)
 Protocol_rex = re.compile('<Data Name=\"Protocol\">(.*)</Data>|<Protocol>(.*)</Protocol>', re.IGNORECASE)
 SourcePort_rex = re.compile('<Data Name=\"SourcePort\">(.*)</Data>|<SourcePort>(.*)</SourcePort>', re.IGNORECASE)
 DestinationPort_rex = re.compile('<Data Name=\"DestinationPort\">(.*)</Data>|<DestinationPort>(.*)</DestinationPort>', re.IGNORECASE)
@@ -76,6 +101,11 @@ Computer_Name_rex = re.compile('<Computer>(.*)</Computer>', re.IGNORECASE)
 ParentProcessId_rex = re.compile('<Data Name=\"ParentProcessId\">(.*)</Data>|<ParentProcessId>(.*)</ParentProcessId>', re.IGNORECASE)
 ParentImage_rex = re.compile('<Data Name=\"ParentImage\">(.*)</Data>|<ParentImage>(.*)</ParentImage>', re.IGNORECASE)
 ParentCommandLine_rex = re.compile('<Data Name=\"ParentCommandLine\">(.*)</Data>|<ParentCommandLine>(.*)</ParentCommandLine>', re.IGNORECASE)
+GrandparentCommandLine_rex = re.compile('<Data Name=\"GrandparentCommandLine\">(.*)</Data>|<GrandparentCommandLine>(.*)</GrandparentCommandLine>', re.IGNORECASE)
+Signed_rex = re.compile('<Data Name=\"Signed\">(.*)</Data>|<Signed>(.*)</Signed>', re.IGNORECASE)
+Signature_rex = re.compile('<Data Name=\"Signature\">(.*)</Data>|<Signature>(.*)</Signature>', re.IGNORECASE)
+State_rex = re.compile('<Data Name=\"State\">(.*)</Data>|<State>(.*)</State>', re.IGNORECASE)
+Status_rex = re.compile('<Data Name=\"Status\">(.*)</Data>|<Status>(.*)</Status>', re.IGNORECASE)
 # My Regex For Event Logs
 Channel_rex = re.compile('<Channel.*>(.*)<\/Channel>', re.IGNORECASE)
 Provider_rex = re.compile('<Provider Name=\"(.*)\" Guid', re.IGNORECASE)
@@ -83,7 +113,7 @@ EventSourceName_rex = re.compile('EventSourceName=\"(.*)\"', re.IGNORECASE)
 ServiceName_rex = re.compile('<Data Name=\"ServiceName\">(.*)</Data>|<ServiceName>(.*)</ServiceName>', re.IGNORECASE)
 Service_Image_Path_rex = re.compile('<Data Name=\"ImagePath\">(.*)</Data>|<ImagePath>(.*)</ImagePath>', re.IGNORECASE)
 ServiceType_rex = re.compile('<Data Name=\"ServiceType\">(.*)</Data>|<ServiceType>(.*)</ServiceType>', re.IGNORECASE)
-Srevice_Account_Name_rex = re.compile('<Data Name=\"AccountName\">(.*)</Data>|<AccountName>(.*)</AccountName>', re.IGNORECASE)
+Service_Account_Name_rex = re.compile('<Data Name=\"AccountName\">(.*)</Data>|<AccountName>(.*)</AccountName>', re.IGNORECASE)
 ServiceStartType_rex = re.compile('<Data Name=\"StartType\">(.*)</Data>|<StartType>(.*)</StartType>', re.IGNORECASE)
 # My Regex for Security logs
 AccountName_rex = re.compile('<Data Name=\"SubjectUserName\">(.*)</Data>|<SubjectUserName>(.*)</SubjectUserName>', re.IGNORECASE)
@@ -128,7 +158,8 @@ GrantedAccess_rex=re.compile("<Data Name=\"GrantedAccess\">(.*)</Data>")
 TargetImage_rex=re.compile("<Data Name=\"TargetImage\">(.*)</Data>")
 # My SourceImage Regex
 SourceImage_rex=re.compile("<Data Name=\"SourceImage\">(.*)</Data>")
-#
+
+
 SourceProcessId_rex=re.compile("<Data Name=\"SourceProcessId\">(.*)</Data>")
 #
 SourceProcessGuid_rex=re.compile("<Data Name=\"SourceProcessGuid\">(.*)</Data>")
@@ -136,6 +167,27 @@ SourceProcessGuid_rex=re.compile("<Data Name=\"SourceProcessGuid\">(.*)</Data>")
 TargetProcessGuid_rex=re.compile("<Data Name=\"TargetProcessGuid\">(.*)</Data>")
 #
 TargetProcessId_rex=re.compile("<Data Name=\"TargetProcessId\">(.*)</Data>")
+#
+PowershellUserId_rex=re.compile("UserId=(.*)")
+#
+PowershellHostApplication_rex=re.compile("HostApplication=(.*)")
+#
+Powershell_ContextInfo= re.compile('<Data Name=\"ContextInfo\">(.*)</Data>', re.IGNORECASE)
+#
+Powershell_Payload= re.compile('<Data Name=\"Payload\">(.*)</Data>', re.IGNORECASE)
+#
+Powershell_Path= re.compile('<Data Name=\"Path\">(.*)</Data>', re.IGNORECASE)
+#
+Command_Name_rex = re.compile('CommandName = (.*)')
+#
+PowerShellCommand_rex = re.compile('<Data>[\s\S]*?</\Data>') # i will come back continue
+
+#j
+CommandLine_powershell_rex = re.compile('CommandLine= (.*)')
+#
+ScriptName_rex = re.compile('ScriptName=(.*)')
+#
+ErrorMessage_rex = re.compile('ErrorMessage=(.*)')
 
 #======================
 
@@ -250,6 +302,9 @@ Winrm_UserID_rex=re.compile('<Security UserID=\"(.*)\"', re.IGNORECASE)
 Sysmon_CommandLine_rex=re.compile("<Data Name=\"CommandLine\">(.*)</Data>")
 Sysmon_ProcessGuid_rex=re.compile("<Data Name=\"ProcessGuid\">(.*)</Data>")
 Sysmon_ProcessId_rex=re.compile("<Data Name=\"ProcessId\">(.*)</Data>")
+Sysmon_FileName_rex=re.compile("<Data Name=\"FileName\">(.*)</Data>")
+Sysmon_ImageFileName_rex=re.compile("<Data Name=\"ImageFileName\">(.*)</Data>")
+Sysmon_Initiated_rex=re.compile("<Data Name=\"Initiated\">(.*)</Data>")
 Sysmon_FileVersion_rex=re.compile("<Data Name=\"FileVersion\">(.*)</Data>")
 Sysmon_Company_rex=re.compile("<Data Name=\"Company\">(.*)</Data>")
 Sysmon_Product_rex=re.compile("<Data Name=\"Product\">(.*)</Data>")
@@ -259,9 +314,12 @@ Sysmon_LogonGuid_rex=re.compile("<Data Name=\"LogonGuid\">(.*)</Data>")
 Sysmon_TerminalSessionId_rex=re.compile("<Data Name=\"TerminalSessionId\">(.*)</Data>")
 Sysmon_Hashes_MD5_rex=re.compile("<Data Name=\"MD5=(.*),")
 Sysmon_Hashes_SHA256_rex=re.compile("<Data Name=\"SHA256=(.*)")
+Sysmon_IntegrityLevel_rex=re.compile("<Data Name=\"IntegrityLevel\">(.*)</Data>")
 Sysmon_ParentProcessGuid_rex=re.compile("<Data Name=\"ParentProcessGuid\">(.*)</Data>")
 Sysmon_ParentProcessId_rex=re.compile("<Data Name=\"ParentProcessId\">(.*)</Data>")
 Sysmon_ParentCommandLine_rex=re.compile("<Data Name=\"ParentCommandLine\">(.*)</Data>")
+Sysmon_ParentUser_rex=re.compile("<Data Name=\"ParentUser\">(.*)</Data>")
+Sysmon_ProviderName_rex=re.compile("<Data Name=\"ProviderName\">(.*)</Data>")
 Sysmon_CurrentDirectory_rex=re.compile("<Data Name=\"CurrentDirectory\">(.*)</Data>")
 Sysmon_OriginalFileName_rex=re.compile("<Data Name=\"OriginalFileName\">(.*)</Data>")
 Sysmon_TargetObject_rex=re.compile("<Data Name=\"TargetObject\">(.*)</Data>")
@@ -283,11 +341,8 @@ Sysmon_StartModule_rex=re.compile("<Data Name=\"StartModule\">(.*)</Data>")
 #########
 Sysmon_ImageLoaded_rex=re.compile("<Data Name=\"ImageLoaded\">(.*)</Data>")
 Sysmon_Details_rex=re.compile("<Data Name=\"Details\">(.*)</Data>")
-
-Sysmon_ImageLoaded_rex=re.compile("<Data Name=\"ImageLoaded\">(.*)</Data>")
 Sysmon_GrantedAccess_rex=re.compile("<Data Name=\"GrantedAccess\">(.*)</Data>")
 Sysmon_CallTrace_rex=re.compile("<Data Name=\"CallTrace\">(.*)</Data>")
-Sysmon_Details_rex=re.compile("<Data Name=\"Details\">(.*)</Data>")
 
 ##########
 
@@ -314,7 +369,7 @@ IPv4_PATTERN = re.compile(r"\A\d+\.\d+\.\d+\.\d+\Z", re.DOTALL)
 IPv6_PATTERN = re.compile(r"\A(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,5})?|([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,4})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,3})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){0,2})?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::(([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3}))?)?|:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})(::([0-9a-f]|[1-9a-f][0-9a-f]{1,3})?|(:([0-9a-f]|[1-9a-f][0-9a-f]{1,3})){3}))))))\Z", re.DOTALL)
 
 
-evtx_list2 = ["19.evtx"]
+evtx_list2 = ["/mnt/c/Users/ahmad/Desktop/biz/project/downloads/EVTX-ATTACK-SAMPLES-master/Discovery/discovery_psloggedon.evtx"]
 
 #detect base64 commands
 def isBase64(command):
@@ -352,17 +407,50 @@ def checker(check):
     if check == "ATTACK_REPLAY_CHECK":
         ATTACK_REPLAY_CHECK_list.append("True")
 
+def event_sanity_check(field):
+    if isinstance(field,list):
+        if len(field) == 0:
+            return field
+        else:
+            if isinstance(field[0],tuple):
+                return field[0][0]
+            else:
+                return field[0]
+    elif isinstance(field,tuple):
+        return field[0]
+    elif isinstance(field,str):
+        return field
 
-
+def field_filter(field,key):
+    # add logic here to filter fields and troubleshoot
+    if key == "Hashes":
+        md5 = ""
+        sha1 = ""
+        sha256 = ""
+        imphash = ""
+        if len(field) == 0:
+            return md5, sha1, sha256, imphash
+        else:
+            hashes = field.split(",")
+            for hash in hashes:
+                if hash.startswith("MD5="):
+                    md5 = hash.strip("MD5=")
+                if hash.startswith("SHA1="):
+                    sha1 = hash.strip("SHA1=")
+                if hash.startswith("SHA256="):
+                    sha256 = hash.strip("SHA256=")
+                if hash.startswith("IMPHASH="):
+                    imphash = hash.strip("IMPHASH=")
+            return md5, sha1, sha256, imphash
 
 def detect_events_security_log(file_name):
     for file in file_name:
         parser = PyEvtxParser(file)
         for record in parser.records():
             EventID = EventID_rex.findall(record['data'])
+            #Parsing starts here
             if len(EventID) > 0:
                 Logon_Type = Logon_Type_rex.findall(record['data'])
-
 
                 #=====================
                 # Mine
@@ -394,7 +482,7 @@ def detect_events_security_log(file_name):
                 Service_Image_Path = Service_Image_Path_rex.findall(record['data'])
                 ServiceType = ServiceType_rex.findall(record['data'])
                 ServiceStartType = ServiceStartType_rex.findall(record['data'])
-                Service_Account_Name = Srevice_Account_Name_rex.findall(record['data'])
+                Service_Account_Name = Service_Account_Name_rex.findall(record['data'])
                 Account_Name = AccountName_rex.findall(record['data'])
                 Account_Domain = AccountDomain_rex.findall(record['data'])
                 Source_IP = Source_IP_Address_rex.findall(record['data'])
@@ -424,6 +512,13 @@ def detect_events_security_log(file_name):
                 TargetImage = TargetImage_rex.findall(record['data'])
                 GrantedAccess = GrantedAccess_rex.findall(record['data'])
                 CallTrace = CallTrace_rex.findall(record['data'])
+                PowershellUserId = PowershellUserId_rex.findall(record['data'])
+                PowershellHostApplication = PowershellHostApplication_rex.findall(record['data'])
+                Command_Name = Command_Name_rex.findall(record['data'])
+                CommandLine_powershell = CommandLine_powershell_rex.findall(record['data'])
+                PowerShellCommand = PowerShellCommand_rex.findall(record['data'])
+                PowerShellCommand_All = record['data']
+                ScriptName = ScriptName_rex.findall(record['data'])
                 #====================
 
                 Logon_Process = Logon_Process_rex.findall(record['data'])
@@ -462,6 +557,122 @@ def detect_events_security_log(file_name):
                 PASS = False
                 PASS1 = False
 
+                ##The function will probably be called here . Just adding the comment for now.
+
+                ### Create JSON of Event
+                Event = {
+                    "Timestamp" : UtcTime_rex.findall(record['data']),
+                    "EventID" : EventID_rex.findall(record['data']),
+                    "Computer" : Computer_Name_rex.findall(record['data']),
+                    "AccessMask" : AccessMask_rex.findall(record['data']),
+                    "AccountName" : Service_Account_Name_rex.findall(record['data']),
+                    "Action" : Action_rex.findall(record['data']),
+                    "AuditPolicyChanges" : Changes_rex.findall((record['data'])),
+                    "CallTrace" : CallTrace_rex.findall(record['data']),
+                    "CallerProcessName":Process_Name_sec_rex.findall(record['data']),
+                    "Channel" : Channel_rex.findall(record['data']),
+                    "CommandLine" : Sysmon_CommandLine_rex.findall(record['data']),
+                    "Company" : Sysmon_Company_rex.findall(record['data']),
+                    "ContextInfo" : Powershell_ContextInfo.findall(record['data']),
+                    "CurrentDirectory" : Sysmon_CurrentDirectory_rex.findall(record['data']),
+                    "Description" : Description_rex.findall(record['data']),
+                    "DestinationHostname" : Sysmon_DestinationHostname_rex.findall(record['data']),
+                    "DestinationIp" : DestinationIp_rex.findall(record['data']),
+                    "DestinationIsIpv6" : Destination_Is_Ipv6_rex.findall(record['data']),
+                    "DestinationPort" : DestinationPort_rex.findall(record['data']),
+                    "Details" : Sysmon_Details_rex.findall(record['data']),
+                    "EngineVersion" : EngineVersion_rex.findall(record['data']),
+                    "FileName" : Sysmon_FileName_rex.findall(record['data']),
+                    "FileVersion" : FileVersion_rex.findall(record['data']),
+                    "GrantedAccess" : GrantedAccess_rex.findall(record['data']),
+                    "GrandparentCommandLine" : GrandparentCommandLine_rex.findall(record['data']),
+                    "Hashes" : Hashes_rex.findall(record['data']),
+                    "HostApplication" : HostApplication_rex.findall(record['data']),
+                    "Image" : Image_rex.findall(record['data']),
+                    "ImageFileName" : Sysmon_ImageFileName_rex.findall(record['data']),
+                    "ImageLoaded" : Sysmon_ImageLoaded_rex.findall(record['data']),
+                    "ImagePath" : Service_Image_Path_rex.findall(record['data']),
+                    "Initiated" : Sysmon_Initiated_rex.findall(record['data']),
+                    "IntegrityLevel" : Sysmon_IntegrityLevel_rex.findall(record['data']),
+                    "IpAddress" : Source_IP_Address_rex.findall(record['data']),
+                    "KeyLength" : Key_Length_rex.findall(record['data']),
+                    "LogonProcessName" : Logon_Process_rex.findall(record['data']),
+                    "LogonType" : Logon_Type_rex.findall(record['data']),
+                    "NewTargetUserName" : NewTargetUserName_rex.findall(record['data']),
+                    "ObjectName" : Object_Name_rex.findall(record['data']),
+                    "ObjectServer" : ObjectServer_rex.findall(record['data']),
+                    "ObjectType" : ObjectType_rex.findall(record['data']),
+                    "OldTargetUserName" : OldTargetUserName_rex.findall(record['data']),
+                    "OriginalFileName" : Sysmon_OriginalFileName_rex.findall(record['data']),
+                    "ParentCommandLine" : ParentCommandLine_rex.findall(record['data']),
+                    "ParentImage" : ParentImage_rex.findall(record['data']),
+                    "ParentUser" : Sysmon_ParentUser_rex.findall(record['data']),
+                    "Path" : Path_rex.findall(record['data']),
+                    "Payload" : Powershell_Payload.findall(record['data']),
+                    "PipeName" : PipeName_rex.findall(record['data']),
+                    "ProcessId" : ProcessId_rex.findall(record['data']),
+                    "Product" : Sysmon_Product_rex.findall(record['data']),
+                    "Protocol" : Protocol_rex.findall(record['data']),
+                    "ProviderName" : Provider_rex.findall(record['data']),
+                    "Provider_Name" : Provider_rex.findall(record['data']),
+                    "RelativeTargetName" : RelativeTargetName_rex.findall(record['data']),
+                    "SamAccountName" : SamAccountName_rex.findall(record['data']),
+                    "ScriptBlockText" : Powershell_Command_rex.findall(record['data']),
+                    "ServiceName" : ServiceName_rex.findall(record['data']),
+                    "ServicePrincipalNames" : ServicePrincipalNames_rex.findall(record['data']),
+                    "ServiceStartType" : ServiceStartType_rex.findall(record['data']),
+                    "ServiceType" : ServiceType_rex.findall(record['data']),
+                    "ShareName" : ShareName_rex.findall(record['data']),
+                    "Signed" : Signed_rex.findall(record['data']),
+                    "Signature" : Signature_rex.findall(record['data']),
+                    "SourceImage" : SourceImage_rex.findall(record['data']),
+                    "SourceIp" : Source_Ip_Address_rex.findall(record['data']),
+                    "SourcePort" : SourcePort_rex.findall(record['data']),
+                    "Source_Name" : EventSourceName_rex.findall(record['data']),
+                    "StartFunction" : Sysmon_StartFunction_rex.findall(record['data']),
+                    "StartModule" : Sysmon_StartModule_rex.findall(record['data']),
+                    "State" : State_rex.findall(record['data']),
+                    "Status" : Status_rex.findall(record['data']),
+                    "SubjectDomainName" : AccountDomain_rex.findall(record['data']),
+                    "SubjectUserName" : AccountName_rex.findall(record['data']),
+                    "SubjectUserSid" : Security_ID_rex.findall(record['data']),
+                    "TargetImage" : TargetImage_rex.findall(record['data']),
+                    "TargetObject" : Sysmon_TargetObject_rex.findall(record['data']),
+                    "TargetUserName" : AccountName_Target_rex.findall(record['data']),
+                    "TargetUserSid" : Security_ID_Target_rex.findall(record['data']),
+                    "Task_Name" : TaskName_rex.findall(record['data']),
+                    "TicketEncryptionType" : TicketEncryptionType_rex.findall(record['data']),
+                    "TicketOptions" : TicketOptions_rex.findall(record['data']),
+                    "User" : User_Name_rex.findall(record['data']),
+                    "UserName" : Task_Deleted_User_rex.findall(record['data']),
+                    "WorkstationName" : Workstation_Name_rex.findall(record['data']),
+                }
+                for key in Event:
+                    Event[key] = event_sanity_check(Event[key])
+                # minor field corrections
+                Event["md5"], Event["sha1"], Event["sha256"], Event["Imphash"] = field_filter(Event["Hashes"], "Hashes")
+                #check for matched rules
+                #Loader function
+
+                Matched_Rules = sigma_manager.MatchRules(Event)
+
+                if len(Matched_Rules) == 0:
+                    pass
+                else:
+                    for matched_rule in range(0,len(Matched_Rules)):
+                        rule_title = Matched_Rules[matched_rule]["title"]
+                        if "falsepositives" in Matched_Rules[matched_rule]:
+                            rule_fp = Matched_Rules[matched_rule]["falsepositives"]
+                        else:
+                            rule_fp = ["None"]
+                        if rule_title in MatchedRulesAgainstLogs.keys():
+                            MatchedRulesAgainstLogs[rule_title]["Events"].append(Event)
+                        else:
+                            MatchedRulesAgainstLogs[rule_title] = {
+                                "falsepositives" : rule_fp,
+                                "Events" : list()
+                            }
+                            MatchedRulesAgainstLogs[rule_title]["Events"].append(Event)
 
                 #Detect any log that contain suspicious process name or argument
                 if EventID[0]=="3":
@@ -509,7 +720,7 @@ def detect_events_security_log(file_name):
                                Suspicios_Event3 = i
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
 
                 elif EventID[0]=="1" and PASS== True:
@@ -563,7 +774,7 @@ def detect_events_security_log(file_name):
                             print("[+] \033[0;31;47mBy Process ID "+ Process_id +" \033[0m\n ", end='')
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 # Detect PowershellRemoting via wsmprovhost
                 elif EventID[0]=="1":
@@ -616,7 +827,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
 
                 # Detect PowershellRemoting via wsmprovhost
@@ -670,7 +881,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
 
                 # Detect Network Connection via Compiled HTML
@@ -726,7 +937,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
 
                 # Detect WinPwnage
@@ -849,6 +1060,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                         # Detect suspicious winlogon.exe SMBV3 CVE-2020-0769
+                        # For me: Comment on the detections later to make them more generic
                         if "winlogon.exe" in Parentimage and "cmd.exe" in ImageName.lower(): # TODO make it more strong, and check the rundll32 of it
                             print("\n__________ " + UtcTime1 + " __________ \n\n ", end='')
                             print(" [+] \033[0;31;47mSMBV3 CVE-2020-0769 !! \033[0m\n ", end='')
@@ -866,7 +1078,7 @@ def detect_events_security_log(file_name):
 
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
 
                 # Detect Remote Service
@@ -896,8 +1108,63 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
+                # detect winrm code execution
+                elif EventID[0]=="800":
+                    try:
+                        if len(Channel[0])>0:
+                            computer = Computer[0].strip()
+                            channel = Channel[0].strip()
+                            PowershellUserId = PowershellUserId[0].strip()
+                            PowershellHostApplication = PowershellHostApplication[0].strip()
+                            CommandLine_powershell = CommandLine_powershell[0].strip()
+                            PowerShellCommand = PowerShellCommand[0].strip()
+                            ScriptName = ScriptName[0].strip()
+                            PowerShellCommand = html.unescape(PowerShellCommand)
+                            CommandLine_powershell = html.unescape(CommandLine_powershell)
+                            PowerShellCommand_All = html.unescape(PowerShellCommand_All)
+                            PowershellHostApplication = html.unescape(PowershellHostApplication)
+                            PowerShellCommand = re.findall(r' (.*)', PowerShellCommand)
+                            words = [r"Invoke-Mimikatz.ps1"]
+                            results = [x for x in PowerShellCommand if all(re.search("\\b{}\\b".format(w), x) for w in words)]
+                            results = results[0].strip()
+
+                        # detect winrm code execution can you show where i have to work
+                        if 1 == 1:
+                            print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='') ### Fix Time
+                            print(" [+] \033[0;31;47mWinrm Detect !! \033[0m\n ", end='')# we need voice call yes
+                            print(" [+] Computer : ( %s ) \n " % computer , end='')
+                            print(" [+] channel : ( %s ) \n " % channel, end='')
+                            print(" [+] user Name: ( %s ) \n " % PowershellUserId, end='')
+                            #print(" [+] Command Name: ( %s ) \n " % Command_Name, end='')
+                            print(" [+] PowerShell Script: ( %s ) \n " % ScriptName, end='')
+                            print(" [+] PowerShell Mode: ( %s ) \n " % CommandLine_powershell, end='')
+                            print(" [+] PowerShell Command: ( %s ) \n " % PowershellHostApplication, end='')
+                            for element in PowerShellCommand:
+                                if 'name="Arguments"' in element:
+                                    print(" [+] PowerShell OutPut: \n ", end='')
+                                    print(element.split('value')[1])
+                            print("____________________________________________________\n")
+
+                        # detect winrm code execution can you show where i have to work
+                        if  results != None:
+                            print("\n__________ " + record["timestamp"] + " __________ \n\n ", end='') ### Fix Time
+                            print(" [+] \033[0;31;47mWinrm Invoke-Mimikatz Detect !! \033[0m\n ", end='')
+                            print(" [+] Computer : ( %s ) \n " % computer , end='')
+                            print(" [+] channel : ( %s ) \n " % channel, end='')
+                            print(" [+] user Name: ( %s ) \n " % PowershellUserId, end='')
+                            print(" [+] PowerShell Command: ( %s ) \n " % PowershellHostApplication, end='')
+                            print(" [+] PowerShell Script: ( %s ) \n " % ScriptName, end='')
+                            print(" [+] Mimikatz Command: ( %s ) \n " % results, end='')
+                            print(bcolor.RED + " [+] PowerShell OutPut:\n ", end='')
+                            for element in PowerShellCommand:
+                                print(bcolor.CBLUE + element, end='\n')
+                            print("____________________________________________________\n")
+
+                    except Exception as e:
+                        #print(e)
+                        pass
 
                 # Detect Remote Task Creation
                 elif EventID[0]=="5145":
@@ -944,7 +1211,7 @@ def detect_events_security_log(file_name):
 
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                     # Detect Remote Task Creation via ATSVC named pipe
                 elif EventID[0] == "4698" or EventID[0] == "4699" and PASS1 == True:
@@ -980,7 +1247,7 @@ def detect_events_security_log(file_name):
                         print(" [+] Task Command Arguments : ( %s ) \n " % Task_arguments, end='')
                         print("____________________________________________________\n")
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 # Kerberos AS-REP Attack Detect
                 if EventID[0] == "4768":
@@ -1007,7 +1274,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 # PowerShell Download Detect
                 if EventID[0] == "4104": # TODO Base64 command Detect
@@ -1034,7 +1301,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 #Detect suspicious process Runing PowerShell Command
                 if EventID[0]=="4688":
@@ -1149,7 +1416,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 #Detect Privilege esclation "GetSystem"
                 if EventID[0]=="7045":
@@ -1177,7 +1444,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 #Detect PsExec execution
                 if EventID[0]=="1":
@@ -1230,7 +1497,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 #Detect PsExec Pipe Connection
                 if EventID[0]=="18":
@@ -1253,7 +1520,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 #Detect PsExec Pipe Creation
                 if EventID[0]=="17":
@@ -1276,7 +1543,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 #Detect PsExec Pipe Creation
                 if EventID[0]=="17":
@@ -1299,7 +1566,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 #Detect SMBV3 CVE-2020-0769
                 if EventID[0]=="10":
@@ -1326,7 +1593,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 #detect pass the hash
                 if EventID[0] == "4625" or EventID[0] == "4624":
@@ -1364,7 +1631,7 @@ def detect_events_security_log(file_name):
                             print("____________________________________________________\n")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 #Start Of Detecting cve-2021-42287
                 if EventID[0]=="4741": #+ EventID[0]=="4673" + EventID[0]=="4742" + EventID[0]=="4781" + EventID[0]=="4768" + EventID[0]=="4781" and EventID[0]=="4769":
@@ -1376,7 +1643,7 @@ def detect_events_security_log(file_name):
                             checker("ATTACK_REPLAY_CHECK")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
 
                 # Detecting Sam Account name changed to domain controller name
@@ -1390,7 +1657,7 @@ def detect_events_security_log(file_name):
                             checker("SAM_ACCOUNT_NAME_CHECK")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 # Verify Sam Account name changed to domain controller name
                 if EventID[0]=="4781":
@@ -1404,7 +1671,7 @@ def detect_events_security_log(file_name):
                              checker("New_Target_User_Name_Check")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
                 # Kerberos AS-REP Attack Detect
                 if EventID[0] == "4768":
@@ -1416,7 +1683,7 @@ def detect_events_security_log(file_name):
                             checker("REQUEST_TGT_CHECK")
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
 ################ end of CVE-2021-42278 DETECTION
 
@@ -1441,7 +1708,7 @@ def detect_events_security_log(file_name):
                         sourceIp_list_2.append(source_ip)
 
                     except Exception as e:
-                        print("Error parsing Event", e)
+                        pass
 
 
         # FULL CVE-2021-42278 DETECTION
@@ -1476,7 +1743,7 @@ def detect_events_security_log(file_name):
 
 
                         except Exception as e:
-                            print("Error parsing Event", e)
+                            pass
     #### END
 
     # For Defrinceation and Detect the attack
@@ -1494,50 +1761,102 @@ def detect_events_security_log(file_name):
             print(" [+] Number Of Spray : ( %s ) \n" % SprayUserDetector, end='')
             print("____________________________________________________\n")
 
+    #### print the final report of the SIGMA scanning
+    try:
+        for RuleName in MatchedRulesAgainstLogs.keys():
+            print(f"[!] Rule Name: {RuleName}", end="\t\t\t\t\t\t\n")
+            print(f"  [-] Potential False-Positives: {MatchedRulesAgainstLogs[RuleName]['falsepositives']}")
+            for Event in MatchedRulesAgainstLogs[RuleName]["Events"]:
+                print("\n__________ " + str(Event["Timestamp"]) + " __________ \n\n ")
+                if len(Event["EventID"]) != 0:
+                    print("     [*] EventID: " + str(Event["EventID"]))
+                if len(Event["Computer"]) != 0:
+                    print("     [*] Computer: " + str(Event["Computer"]))
+                if len(Event["Image"]) != 0:
+                    print("     [*] Process Image: " + str(Event["Image"]))
+                if len(Event["CommandLine"]) != 0:
+                    print("     [*] CommandLine: " + str(Event["CommandLine"]))
+                if len(Event["ParentImage"]) != 0:
+                    print("     [*] Parent Process Image: " + str(Event["ParentImage"]))
+                if len(Event["ParentCommandLine"]) != 0:
+                    print("     [*] Parent Process CommandLine: " + str(Event["ParentCommandLine"]))
+                if len(Event["User"]) != 0:
+                    print("     [*] User: " + str(Event["User"]))
+                if len(Event["UserName"]) != 0:
+                    print("     [*] UserName: " + str(Event["UserName"]))
+                if len(Event["SourceIp"]) != 0:
+                    print("     [*] Source IP Address: " + str(Event["SourceIp"]) + ":" + str(Event["SourcePort"]))
+                if len(Event["DestinationIp"]) != 0:
+                    print("     [*] Destionation IP Address: " + str(Event["DestinationIp"]) + ":" + str(Event["DestinationPort"]))
+                if len(Event["OriginalFileName"]) != 0:
+                    print("     [*] Original File Name: " + str(Event["OriginalFileName"]))
+                if len(Event["SubjectUserName"]) != 0:
+                    print("     [*] Subject User Name: " + str(Event["SubjectUserName"]))
+                if len(Event["TargetUserName"]) != 0:
+                    print("     [*] Target User Name: " + str(Event["TargetUserName"]))
+                if len(Event["SubjectDomainName"]) != 0:
+                    print("     [*] Subject Domain Name: " + str(Event["SubjectDomainName"]))
+                print("____________________________________________________\n")
+                print("____________________________________________________\n")
+    except Exception as ERROR:
+        print(ERROR)
+        print("Error printing the Matched Rules")
+
+    # Print the list of all rules that match. Each rule key contains all corresponding events that matched
+    # print(MatchedRulesAgainstLogs.keys())
+    # You can use this variable MatchedRulesAgainstLogs any way you want
+
 #========================================== END OF SPRAY Detect
 
 
 # Parsing Evtx File
 def parse_evtx(evtx_list):
     try:
-        count = 0
-        record_sum = 0
-        evtx = None
-        for evtx_file in evtx_list:
-            if evtx is None:
-                with open(evtx_file, "rb") as fb:
-                    fb_data = fb.read(8)
-                    if fb_data != EVTX_HEADER:
-                        sys.exit("[!] This file is not EVTX format {0}.".format(evtx_file))
+        # count = 0
+        # record_sum = 0
+        # evtx = None
+        # for evtx_file in evtx_list:
+        #     if evtx is None:
+        #         with open(evtx_file, "rb") as fb:
+        #             fb_data = fb.read(8)
+        #             if fb_data != EVTX_HEADER:
+        #                 sys.exit("[!] This file is not EVTX format {0}.".format(evtx_file))
 
-                with open(evtx_file, "rb") as evtx:
-                    parser = PyEvtxParser(evtx)
-                    records = list(parser.records())
-                    record_sum += len(records)
+        #         with open(evtx_file, "rb") as evtx:
+        #             parser = PyEvtxParser(evtx)
+        #             records = list(parser.records())
+        #             record_sum += len(records)
 
-        print("[+] Last record number is {0}.".format(record_sum))
+        # print("[+] Last record number is {0}.".format(record_sum))
 
-        # Parse Event log
-        print("[+] Start parsing the EVTX file.")
+        # # Parse Event log
+        # print("[+] Start parsing the EVTX file.")
 
-        for evtx_file in evtx_list:
-            print("[+] Parse the EVTX file {0}.".format(evtx_file))
+        # for evtx_file in evtx_list:
+        #     print("[+] Parse the EVTX file {0}.".format(evtx_file))
 
-            for record, err in xml_records(evtx_file):
-                if err is not None:
-                    continue
-                count += 1
+        #     for record, err in xml_records(evtx_file):
+        #         if err is not None:
+        #             continue
+        #         count += 1
 
-                if evtx_file == evtx_file:
-                    sys.stdout.write("\r[+] Now loading {0} records.".format(count))
-                    sys.stdout.flush()
+        #         if evtx_file == evtx_file:
+        #             sys.stdout.write("\r[+] Now loading {0} records.".format(count))
+        #             sys.stdout.flush()
 
         detect_events_security_log(evtx_list)
     except Exception as e:
+        print("Exception Occurred")
+        print(e)
         print("Opps !")
         print("Enter a Correct Path")
 
 
+#def sigmahq():
+    ## we need to convert the .yml to varible
+    ## store all .yml files values to them varible
+    ## compare the .yml varible values with .xml varible values
+    ## prin tthe result with .yml tag value.
 
 banner = '''
 
@@ -1642,6 +1961,7 @@ def LOGO():
 
 if __name__ == '__main__':
     LOGO()
+    sigma_manager.CheckUpdate()
     file = str(input("\033[35mEnter EVTX File With Full Path \nFile:    >>> \033[0m"))
     evtx_list.append(file)
     parse_evtx(evtx_list)
