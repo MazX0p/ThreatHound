@@ -1,5 +1,8 @@
 # ThreatHound
 
+This tool will help you on your IR & Threat Hunting & CA. just drop your event log file and anlayze the results. 
+
+
 # I’ve built the following:
 - A dedicated backend to support Sigma rules for python
 - A dedicated backend for parsing evtx for python 
@@ -19,6 +22,7 @@
 - Support for Sigma rules dedicated for DNS query 
 - Modifying the speed of algorithm dedicated for the detection and making it faster
 - Adding JSON output that supports Splunk
+- More features
 
 # installiton:
 ```sh
@@ -33,7 +37,11 @@ $ pyhton3 ThreatHound.py
 
 # Demo:
 
-https://user-images.githubusercontent.com/54814433/173213830-a32d7264-1615-4943-bad1-76c5763220f0.mp4
+
+
+https://user-images.githubusercontent.com/54814433/209445263-7d48b1da-dd27-41c8-850a-f02d71c2ed77.mp4
+
+
 
 
 
