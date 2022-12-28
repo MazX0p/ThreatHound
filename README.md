@@ -6,7 +6,7 @@ This tool will help you on your IR & Threat Hunting & CA. just drop your event l
 - support windows (ThreatHound.exe)
 - C for Linux based 
 - new vesion available in C also
-- now you can save results in json file or print on screen it as you want by arg 'print' "'y' to print the results on screen and 'n' to save the results on json file"
+- now you can save results in json file or print on screen it as you want by arg 'print' "'yes' to print the results on screen and 'no' to save the results on json file"
 - you can give windows event logs folder or single evtx file or multiple evtx separated by comma by arg -p 
 - you can now give sigam ruels path by arg -s 
 - add multithreading to improve runing speed
@@ -15,8 +15,11 @@ This tool will help you on your IR & Threat Hunting & CA. just drop your event l
 * Example:
 
 ```sh
-$ ThreatHound.exe -s ..\sigma_rules\ -p C:\Windows\System32\winevt\Logs\ print n
+$ ThreatHound.exe -s ..\sigma_rules\ -p C:\Windows\System32\winevt\Logs\ -print no
 ``` 
+* NOTE: give cmd full promission to read from "C:\Windows\System32\winevt\Logs\"
+
+
 * Linux Based:
 ![image](https://user-images.githubusercontent.com/54814433/209744293-47ed18da-805f-405e-b37a-099085b4574f.png)
 
