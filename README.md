@@ -23,6 +23,9 @@ $ ThreatHound.exe -s ..\sigma_rules\ -p C:\Windows\System32\winevt\Logs\ -print 
 * Linux Based:
 ![image](https://user-images.githubusercontent.com/54814433/209744293-47ed18da-805f-405e-b37a-099085b4574f.png)
 
+* Windows Based
+![image](https://user-images.githubusercontent.com/54814433/209751985-bc3b970d-f40b-434a-9538-e76263d75cfd.png)
+
 
 # I’ve built the following:
 - A dedicated backend to support Sigma rules for python
