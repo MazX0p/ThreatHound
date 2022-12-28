@@ -2,8 +2,10 @@
 
 This tool will help you on your IR & Threat Hunting & CA. just drop your event log file and anlayze the results. 
 
-# Update Features windows edetion:
+# New Release Features:
 - support windows (ThreatHound.exe)
+- C for Linux based 
+- new vesion available in C also
 - now you can save results in json file or print on screen it as you want by arg 'print' "'y' to print the results on screen and 'n' to save the results on json file"
 - you can give windows event logs folder or single evtx file or multiple evtx separated by comma by arg -p 
 - you can now give sigam ruels path by arg -s 
@@ -14,8 +16,7 @@ This tool will help you on your IR & Threat Hunting & CA. just drop your event l
 
 ```sh
 $ ThreatHound.exe -s ..\sigma_rules\ -p C:\Windows\System32\winevt\Logs\ print n
-```
-
+``` 
 
 
 # I’ve built the following:
