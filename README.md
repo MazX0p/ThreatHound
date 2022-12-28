@@ -17,6 +17,9 @@ This tool will help you on your IR & Threat Hunting & CA. just drop your event l
 ```sh
 $ ThreatHound.exe -s ..\sigma_rules\ -p C:\Windows\System32\winevt\Logs\ print n
 ``` 
+* Linux Based:
+![image](https://user-images.githubusercontent.com/54814433/209744293-47ed18da-805f-405e-b37a-099085b4574f.png)
+
 
 # I’ve built the following:
 - A dedicated backend to support Sigma rules for python
