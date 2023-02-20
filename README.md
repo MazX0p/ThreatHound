@@ -2,17 +2,17 @@
 
 # ThreatHound
 
-This tool will help you on your IR & Threat Hunting & CA. just drop your event log file and anlayze the results. 
+This tool will help you on your IR & Threat Hunting & CA. just drop your event log file and analyze the results. 
 
 # New Release Features:
 - support windows (ThreatHound.exe)
 - C for Linux based 
-- new vesion available in C also
+- new version available in C also
 - now you can save results in json file or print on screen it as you want by arg 'print' "'yes' to print the results on screen and 'no' to save the results on json file"
 - you can give windows event logs folder or single evtx file or multiple evtx separated by comma by arg -p 
-- you can now give sigam ruels path by arg -s 
-- add multithreading to improve runing speed
-- ThreatHound.exe is agent based you can push it and run it on multiple servers
+- you can now give sigma rules path by arg -s 
+- add multithreading to improve running speed
+- ThreatHound.exe is agent based, you can push it and run it on multiple servers
 
 * Example:
 
@@ -37,8 +37,8 @@ $ ThreatHound.exe -s ..\sigma_rules\ -p C:\Windows\System32\winevt\Logs\ -print 
 # Features of the tool:
 - Automation for Threat hunting, Compromise Assessment, and Incident Response for the Windows Event Logs
 - Downloading and updating the Sigma rules daily from the source
-- More then 50 detection rules included
-- support for more then 1500 detection rules for Sigma
+- More than 50 detection rules included
+- support for more than 1500 detection rules for Sigma
 - Support for new sigma rules dynamically and adding it to the detection rules
 - Saving of all the outputs in JSON format
 - Easily add any detection rules you prefer 
@@ -50,12 +50,12 @@ $ ThreatHound.exe -s ..\sigma_rules\ -p C:\Windows\System32\winevt\Logs\ -print 
 - Adding JSON output that supports Splunk
 - More features
 
-# installiton:
+# Installation:
 ```sh
 $ git clone https://github.com/MazX0p/ThreatHound.git
 $ cd ThreatHound
 $ pip install - r requirements.txt
-$ pyhton3 ThreatHound.py
+$ python3 ThreatHound.py
 ```
 * Note: glob doesn't support get path of the directory if it has spaces on folder names, please ensure the path of the tool is without spaces (folders names)
 
