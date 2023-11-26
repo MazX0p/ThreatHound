@@ -9,15 +9,16 @@ ThreatHound is an advanced cybersecurity tool designed to facilitate efficient t
 - Downloading and updating the Sigma rules daily from the source
 - More then 50 detection rules included
 - support for more then 2300 detection rules for Sigma
-- Support for new sigma rules dynamically and adding it to the detection rules
-- Saving of all the outputs in cvs format
+- Support for new sigma rules dynamically and adding it to the detection rulest
 - Easily add any detection rules you prefer 
 - you can add new event log source type in mapping.py easily
 - Sigma Rule Management: Seamlessly manage and process Sigma rules.
   ## V2 Features:
   - Faster!!.
+  - Saving of all the outputs in cvs format with full details. 
   - Log Analysis: Analyze logs using custom mappings and filters.
   - User Interface: Intuitive GUI for easy interaction and visualization.
+  - Command Interface: you can use command only.
   - Data Visualization: Graphical representation of data for better insights.
   - Real-Time Analysis: Process and analyze data in real-time.
   - Customization: Easily customizable to suit different cybersecurity needs.
@@ -49,24 +50,25 @@ $ pyhton3 ThreatHound.py
 
 # Demo:
 
-https://user-images.githubusercontent.com/54814433/209446178-7a37f67a-d00b-49fa-adad-17d7658a59e3.mp4
-
-https://player.vimeo.com/video/784137549?h=6a0e7ea68a&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479
-
+..
 
 # Screenshots:
 
+# GUI: 
 
-![image](https://user-images.githubusercontent.com/54814433/209151453-26e657a2-6107-4830-8eea-271af89933ba.png)
+![image](https://github.com/MazX0p/ThreatHound/assets/54814433/fbf8cf46-ce10-46f2-9af4-ea239b0bb5b3)
 
+![image](https://github.com/MazX0p/ThreatHound/assets/54814433/b30a70fc-4e9c-4a27-a556-25976f072714)
 
+![image](https://github.com/MazX0p/ThreatHound/assets/54814433/009f9f31-2781-461c-8952-cc69cc7653b9)
 
-![image](https://user-images.githubusercontent.com/54814433/209151521-576115be-44af-4154-b8bc-6265a19a1a65.png)
+![image](https://github.com/MazX0p/ThreatHound/assets/54814433/5a0e1155-8663-45f8-a37f-6b2c9085c000)
 
+![image](https://github.com/MazX0p/ThreatHound/assets/54814433/fec9922c-b00c-4dd1-910c-7d25e06f63e9)
 
+![image](https://github.com/MazX0p/ThreatHound/assets/54814433/7ee7183b-c4d9-4a42-86d6-885c5857ad3b)
 
-![image](https://user-images.githubusercontent.com/54814433/209151757-211fb18f-5c0a-42f0-8efb-788d7a48040a.png)
+# COMMAND LINE:
 
-
-![image](https://user-images.githubusercontent.com/54814433/209151977-07943765-3707-4e18-9aff-b9c2236086a1.png)
+![image](https://github.com/MazX0p/ThreatHound/assets/54814433/11f71030-e1be-4a0d-bf6f-731e4b68b774)
 
