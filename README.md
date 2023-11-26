@@ -25,7 +25,20 @@ ThreatHound is an advanced cybersecurity tool designed to facilitate efficient t
   - Customization: Easily customizable to suit different cybersecurity needs.
   - Compatibility: Cross-platform compatibility with support for different data formats.
   
+# Functionalities:
 
+- Comprehensive Sigma Rule Management: ThreatHound integrates sophisticated Sigma rule processing capabilities, enabling users to manage and apply these rules effortlessly for detailed 
+  log analysis.
+- Robust Log Analysis: Equipped with advanced log parsing features, the tool can handle and analyze extensive log data. This includes custom mappings and filters for precise examination 
+  of security logs.
+- Real-Time Threat Detection: At its core, ThreatHound is engineered to process and analyze data in real-time, making it a vital asset for immediate threat identification and response.
+- Data Visualization: With built-in data visualization features, the tool presents complex data in an accessible format, aiding in quick comprehension and decision-making.
+- Cross-Platform Compatibility: Designed to be versatile, ThreatHound supports various data formats and is compatible across multiple platforms, ensuring seamless integration into diverse 
+  IT ecosystems.
+- User-Centric Interface: The tool's GUI, built with PyQt5, offers an engaging and easy-to-navigate interface, making it accessible for both seasoned cybersecurity experts and newcomers.
+- Customizability and Scalability: Acknowledging the dynamic nature of cybersecurity, ThreatHound is highly customizable and scalable, catering to evolving security needs and challenges.
+
+  
 # I’ve built the following:
 - A dedicated backend to support Sigma rules for python
 - A dedicated backend for parsing evtx for python
