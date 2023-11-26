@@ -31,9 +31,12 @@ ThreatHound is an advanced cybersecurity tool designed to facilitate efficient t
 - A dedicated backend to match between evtx and the Sigma rules
 
 # To-do:
-[x] ~~Support for Sigma rules dedicated for DNS query~~ 
-[x] ~~Modifying the speed of algorithm dedicated for the detection and making it faster~~
-[x] ~~Adding csv output that supports SIEMS~~
+[x] ~~Support for Sigma rules dedicated for DNS query~~  
+
+[x] ~~Modifying the speed of algorithm dedicated for the detection and making it faster~~  
+
+[x] ~~Adding csv output that supports SIEMS~~  
+
 [x] ~~More features~~
 
 # installiton:
