@@ -15,7 +15,8 @@ ThreatHound is an advanced cybersecurity tool designed to facilitate efficient t
 - Sigma Rule Management: Seamlessly manage and process Sigma rules.
   ## V2 Features:
   - Faster!!.
-  - Saving of all the outputs in cvs format with full details. 
+  - Saving of all the outputs in cvs format with full details.
+  - searching functionality. 
   - Log Analysis: Analyze logs using custom mappings and filters.
   - User Interface: Intuitive GUI for easy interaction and visualization.
   - Command Interface: you can use command only.
@@ -58,8 +59,6 @@ $ pyhton3 ThreatHound.py
 
 ![image](https://github.com/MazX0p/ThreatHound/assets/54814433/fbf8cf46-ce10-46f2-9af4-ea239b0bb5b3)
 
-![image](https://github.com/MazX0p/ThreatHound/assets/54814433/b30a70fc-4e9c-4a27-a556-25976f072714)
-
 ![image](https://github.com/MazX0p/ThreatHound/assets/54814433/009f9f31-2781-461c-8952-cc69cc7653b9)
 
 ![image](https://github.com/MazX0p/ThreatHound/assets/54814433/5a0e1155-8663-45f8-a37f-6b2c9085c000)
@@ -69,6 +68,8 @@ $ pyhton3 ThreatHound.py
 ![image](https://github.com/MazX0p/ThreatHound/assets/54814433/7ee7183b-c4d9-4a42-86d6-885c5857ad3b)
 
 # COMMAND LINE:
+
+![image](https://github.com/MazX0p/ThreatHound/assets/54814433/b30a70fc-4e9c-4a27-a556-25976f072714)
 
 ![image](https://github.com/MazX0p/ThreatHound/assets/54814433/11f71030-e1be-4a0d-bf6f-731e4b68b774)
 
