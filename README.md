@@ -69,7 +69,8 @@ $ pyhton3 ThreatHound.py
 
 # Demo:
 
-..
+![tool](https://github.com/MazX0p/ThreatHound/assets/54814433/550e0655-806a-4d7f-80d7-fa87284ac362)
+
 
 # Screenshots:
 
