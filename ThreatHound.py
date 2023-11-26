@@ -2359,4 +2359,3 @@ if __name__ == '__main__':
 #threathound.py multi 90s
 #https://qss-stock.devsecstudio.com/templates.php
 #pyuic5 -o main_window_ui.py ui/main_window.ui
-#https://github.com/Yamato-Security/hayabusa
