@@ -29,7 +29,7 @@ ThreatHound is an advanced cybersecurity tool designed to facilitate efficient t
 # I’ve built the following:
 - A dedicated backend to support Sigma rules for python
 - A dedicated backend for parsing evtx for python
-- A dedicated backend for match between cvs and the Sigma rules
+- A dedicated backend for match between csv and the Sigma rules
 - A dedicated backend to match between evtx and the Sigma rules
 
 # To-do:
