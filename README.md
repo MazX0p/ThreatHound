@@ -25,19 +25,24 @@ ThreatHound is an advanced cybersecurity tool designed to facilitate efficient t
   - Customization: Easily customizable to suit different cybersecurity needs.
   - Compatibility: Cross-platform compatibility with support for different data formats.
   
-# Functionalities:
+## Specialized Features for DFIR Professionals:
 
-- Comprehensive Sigma Rule Management: ThreatHound integrates sophisticated Sigma rule processing capabilities, enabling users to manage and apply these rules effortlessly for detailed 
-  log analysis.
-- Robust Log Analysis: Equipped with advanced log parsing features, the tool can handle and analyze extensive log data. This includes custom mappings and filters for precise examination 
-  of security logs.
-- Real-Time Threat Detection: At its core, ThreatHound is engineered to process and analyze data in real-time, making it a vital asset for immediate threat identification and response.
-- Data Visualization: With built-in data visualization features, the tool presents complex data in an accessible format, aiding in quick comprehension and decision-making.
-- Cross-Platform Compatibility: Designed to be versatile, ThreatHound supports various data formats and is compatible across multiple platforms, ensuring seamless integration into diverse 
-  IT ecosystems.
-- User-Centric Interface: The tool's GUI, built with PyQt5, offers an engaging and easy-to-navigate interface, making it accessible for both seasoned cybersecurity experts and newcomers.
-- Customizability and Scalability: Acknowledging the dynamic nature of cybersecurity, ThreatHound is highly customizable and scalable, catering to evolving security needs and challenges.
+- **Forensic Data Analysis**: Equipped with capabilities to analyze forensic artifacts, aiding in digital investigations.
+- **Incident Response Toolkit**: Provides essential tools for rapid response to security incidents, helping DFIR teams to quickly assess and react to threats.
+- **Timeline Analysis**: Supports constructing and analyzing timelines of events, crucial for understanding the sequence of activities during an incident.
+- **Artifact Correlation**: Facilitates correlation of various digital artifacts, aiding in the identification of malicious activities and breach points.
+- **Log Consolidation and Analysis**: Aggregates and analyzes logs from various sources, providing a comprehensive view of security-related events.
+- **Integrations with Forensic Tools**: Offers integration capabilities with popular forensic tools, enhancing its utility in a DFIR context.
+  
+## Ideal Use Cases:
 
+- **Security Monitoring**: For organizations looking to bolster their security monitoring capabilities, ThreatHound provides real-time analysis and alerts.
+
+- **Incident Investigation**: In the event of a security incident, the tool's deep analysis features enable rapid understanding and response.
+
+- **Compliance and Reporting**: With its comprehensive data handling, ThreatHound assists in maintaining compliance standards and generates detailed reports for auditing purposes.
+
+- **Educational and Training Purposes**: Its user-friendly interface and comprehensive feature set make ThreatHound an excellent tool for educational environments focusing on cybersecurity training.
   
 # I’ve built the following:
 - A dedicated backend to support Sigma rules for python
