@@ -2,7 +2,7 @@
 
 # ThreatHound
 
-ThreatHound is an advanced cybersecurity tool designed to facilitate efficient threat detection and analysis. it offers a user-friendly interface for managing and analyzing security data. Key features include log analysis, Sigma rule integration, and real-time threat detection.
+ThreatHound is an advanced cybersecurity tool designed to facilitate efficient threat detection and analysis, windows events logs. it offers a user-friendly interface for managing and analyzing security data. Key features include log analysis, Sigma rule integration, and real-time threat detection.
 
 # Key Features:
 - Automation for Threat hunting, Compromise Assessment, and Incident Response for the Windows Event Logs
